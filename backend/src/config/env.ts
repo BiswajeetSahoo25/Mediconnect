@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-const requiredEnvVariables = ["NODE_ENV", "PORT"] as const;
+const requiredEnvVariables = ["NODE_ENV", "PORT", "DATABASE_URL"] as const;
 
 for (const variable of requiredEnvVariables) {
   if (!process.env[variable]) {
@@ -10,5 +10,6 @@ for (const variable of requiredEnvVariables) {
 
 export const env = {
   nodeEnv: process.env.NODE_ENV,
-  port: Number(process.env.PORT)
+  port: Number(process.env.PORT),
+  databaseUrl: process.env.DATABASE_URL
 };
