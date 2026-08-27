@@ -1,6 +1,7 @@
 import argon2 from "argon2";
 import { ConflictError } from "../errors/http-errors.js";
 import { UserRepository } from "../repositories/user.repository.js";
+import { CreateUserInput } from "../validators/user.validator.js";
 
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -13,7 +14,7 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
-  async createUser(data: { email: string; phone?: string; password: string }) {
+  async createUser(data: CreateUserInput) {
     const existingUserByEmail = await this.userRepository.findByEmail(
       data.email,
     );

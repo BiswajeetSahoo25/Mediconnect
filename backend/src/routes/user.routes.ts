@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { userIdSchema } from "../validators/user.validator.js";
+import {
+  createUserSchema,
+  userIdSchema,
+} from "../validators/user.validator.js";
 
 const router = Router();
 const userController = new UserController();
@@ -12,6 +15,14 @@ router.get(
     params: userIdSchema,
   }),
   userController.getById.bind(userController),
+);
+
+router.post(
+  "/",
+  validate({
+    body: createUserSchema,
+  }),
+  userController.create.bind(userController),
 );
 
 export default router;
