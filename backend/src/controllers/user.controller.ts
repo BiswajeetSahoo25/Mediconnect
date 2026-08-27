@@ -1,29 +1,35 @@
 import type { Request, Response } from "express";
 import { UserService } from "../services/user.service.js";
 import { UserRepository } from "../repositories/user.repository.js";
+import { NotFoundError } from "../errors/http-errors.js";
+import { UserIdInput } from "../validators/user.validator.js";
 
 const userService = new UserService(new UserRepository());
 
 export class UserController {
   async getById(req: Request, res: Response) {
-    const { id } = req.params;
+    const { id } = req.validated.params as UserIdInput;
 
-    if (typeof id != "string") {
-      res.status(400).json({
-        status: "error",
-        message: "Invalid user id",
-      });
-      return;
-    }
     const user = await userService.getUserById(id);
 
     if (!user) {
-      res.status(404).json({
-        status: "error",
-        message: "User not found",
-      });
-      return;
+      throw new NotFoundError("User not found");
     }
+
+    res.status(200).json({
+      status: "success",
+      data: user,
+    });
+  }
+
+  async create(req: Request, res: Response) {
+    const { email, phone, password } = req.body;
+
+    const user = await userService.createUser({
+      email,
+      phone,
+      password,
+    });
 
     res.status(200).json({
       status: "success",

@@ -1,3 +1,4 @@
+import { errorMiddleware } from "./middleware/error.middleware.js";
 import userRouter from "./routes/user.routes.js";
 import express from "express";
 
@@ -16,6 +17,9 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use("/api/v1/users", userRouter)
+app.use("/api/v1/users", userRouter);
+
+app.use(errorMiddleware);
+
 
 export default app;
