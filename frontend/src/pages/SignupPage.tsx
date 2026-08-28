@@ -7,13 +7,14 @@ import {
   signupSchema,
   type SignupFormData,
 } from "../validators/signup.validator";
-import { createUser } from "../services/api";
+import { ApiError, createUser } from "../services/api";
 
 function SignupPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    setError,
+    formState: { errors, isSubmitting },
   } = useForm<z.input<typeof signupSchema>, any, z.output<typeof signupSchema>>(
     {
       resolver: zodResolver(signupSchema),
@@ -23,8 +24,24 @@ function SignupPage() {
   async function onSubmit(data: SignupFormData) {
     try {
       const result = await createUser(data);
-      console.log(result);
+
+      console.log("Signup successful:", result);
     } catch (error) {
+      if (error instanceof ApiError) {
+        const fields = error.details?.fields ?? [];
+
+        for (const field of fields) {
+          if (field === "email" || field === "phone" || field === "password") {
+            setError(field, {
+              type: "server",
+              message: error.message,
+            });
+          }
+        }
+
+        return;
+      }
+
       console.error(error);
     }
   }
@@ -97,9 +114,10 @@ function SignupPage() {
 
           <button
             type="submit"
-            className="w-full rounded-lg px-4 py-2 font-medium bg-amber-200 border-2 "
+            disabled={isSubmitting}
+            className="w-full rounded-lg border-2 bg-amber-200 px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Create Account
+            {isSubmitting ? "Creating Account..." : "Create Account"}
           </button>
         </form>
       </div>
