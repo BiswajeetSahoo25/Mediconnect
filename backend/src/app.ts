@@ -1,8 +1,15 @@
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import userRouter from "./routes/user.routes.js";
 import express from "express";
+import cors from "cors";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+  }),
+);
 
 app.use(express.json());
 
@@ -20,6 +27,5 @@ app.get("/health", (_req, res) => {
 app.use("/api/v1/users", userRouter);
 
 app.use(errorMiddleware);
-
 
 export default app;

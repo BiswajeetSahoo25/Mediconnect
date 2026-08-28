@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
+import { mapPrismaError } from "../errors/error-mapper.js";
 
 export class UserRepository {
   async findById(id: string) {
@@ -15,9 +16,12 @@ export class UserRepository {
   }
 
   async create(data: Prisma.UserCreateInput) {
-    return prisma.user.create({
-      data,
-    });
+    try {
+      return await prisma.user.create({
+        data,
+      });
+    } catch (error) {
+      throw mapPrismaError(error);
+    }
   }
 }
-
