@@ -51,3 +51,10 @@ export class ValidationError extends AppError {
     this.name = "ValidationError";
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Invalid credentials") {
+    super(message, 401);
+    this.name = "UnauthorizedError";
+  }
+}

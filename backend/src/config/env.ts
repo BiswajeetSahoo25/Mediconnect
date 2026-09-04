@@ -1,15 +1,25 @@
 import "dotenv/config";
 
-const requiredEnvVariables = ["NODE_ENV", "PORT", "DATABASE_URL"] as const;
+function getRequiredEnv(variable: string): string {
+  const value = process.env[variable];
 
-for (const variable of requiredEnvVariables) {
-  if (!process.env[variable]) {
+  if (!value) {
     throw new Error(`Missing required environment variable: ${variable}`);
   }
+
+  return value;
 }
 
 export const env = {
-  nodeEnv: process.env.NODE_ENV,
-  port: Number(process.env.PORT),
-  databaseUrl: process.env.DATABASE_URL
+  nodeEnv: getRequiredEnv("NODE_ENV"),
+  port: Number(getRequiredEnv("PORT")),
+  databaseUrl: getRequiredEnv("DATABASE_URL"),
+
+  frontendUrl: getRequiredEnv("FRONTEND_URL"),
+
+  jwtAccessSecret: getRequiredEnv("JWT_ACCESS_SECRET"),
+  jwtAccessExpiresIn: getRequiredEnv("JWT_ACCESS_EXPIRES_IN"),
+  refreshTokenExpiresInDays: Number(
+    getRequiredEnv("REFRESH_TOKEN_EXPIRES_IN_DAYS"),
+  ),
 };

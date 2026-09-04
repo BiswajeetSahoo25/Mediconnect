@@ -12,3 +12,11 @@ export const createUserSchema = z.strictObject({
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+
+export const loginSchema = z.strictObject({
+  email: z.email(),
+  password: z.string().min(8).max(128),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;

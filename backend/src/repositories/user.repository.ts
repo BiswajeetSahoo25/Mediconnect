@@ -24,4 +24,13 @@ export class UserRepository {
       throw mapPrismaError(error);
     }
   }
+  
+  async updateLastLogin(id: string) {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        lastLoginAt: new Date(),
+      },
+    });
+  }
 }
