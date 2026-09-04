@@ -1,4 +1,5 @@
 import "express";
+import type { JWTPayload } from "jose";
 
 declare global {
   namespace Express {
@@ -11,4 +12,11 @@ declare global {
     }
   }
 }
- 
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JWTPayload;
+    }
+  }
+}

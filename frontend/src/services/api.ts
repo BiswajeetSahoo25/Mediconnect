@@ -1,6 +1,13 @@
+import axios, { type InternalAxiosRequestConfig } from "axios";
+
 import type { SignupFormData } from "../validators/signup.validator";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
 
 type ApiErrorResponse = {
   status: "error";
@@ -10,6 +17,46 @@ type ApiErrorResponse = {
     errors?: unknown | null;
   } | null;
 };
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+let refreshPromise: Promise<unknown> | null = null;
+
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config as RetryableRequestConfig;
+
+    if (
+      error.response?.status !== 401 ||
+      originalRequest.url === "/auth/refresh" ||
+      originalRequest._retry
+    ) {
+      throw error;
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = api.post("/auth/refresh").finally(() => {
+          refreshPromise = null;
+        });
+      }
+
+      await refreshPromise;
+
+      return api.request(originalRequest);
+    } catch {
+      window.dispatchEvent(new Event("auth:failed"));
+
+      throw error;
+    }
+  },
+);
 
 export class ApiError extends Error {
   public readonly statusCode: number;
@@ -28,35 +75,67 @@ export class ApiError extends Error {
   }
 }
 
-export async function createUser(data: SignupFormData) {
-  const response = await fetch(`${API_BASE_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+function handleApiError(error: unknown): never {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    const result = error.response?.data;
 
-  const result: unknown = await response.json();
-
-  if (!response.ok) {
-    if (
-      typeof result === "object" &&
-      result !== null &&
-      "message" in result &&
-      typeof result.message === "string"
-    ) {
-      const details =
-        "details" in result &&
-        (typeof result.details === "object" || result.details === null)
-          ? result.details
-          : null;
-
-      throw new ApiError(result.message, response.status, details);
+    if (result?.message) {
+      throw new ApiError(
+        result.message,
+        error.response?.status ?? 500,
+        result.details ?? null,
+      );
     }
 
-    throw new ApiError("Something went wrong", response.status, null);
+    throw new ApiError(
+      "Something went wrong",
+      error.response?.status ?? 500,
+      null,
+    );
   }
 
-  return result;
+  throw error;
+}
+
+export async function createUser(data: SignupFormData) {
+  try {
+    const response = await api.post("/auth/signup", data);
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function loginUser(email: string, password: string) {
+  try {
+    const response = await api.post("/auth/login", {
+      email,
+      password,
+    });
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const response = await api.get("/auth/me");
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function logoutUser() {
+  try {
+    const response = await api.post("/auth/logout");
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
