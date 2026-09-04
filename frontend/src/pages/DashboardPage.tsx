@@ -11,24 +11,40 @@ function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">
-          Welcome to MediConnect
-        </h1>
+    <div>
+      <div className="mb-8">
+        <p className="text-sm font-medium text-slate-500">Dashboard</p>
 
-        <p className="mt-2">
-          Logged in as {user?.email}
-        </p>
+        <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+          Welcome back 👋
+        </h2>
 
-        <p className="mt-1">
-          Role: {user?.role}
+        <p className="mt-2 text-sm text-slate-500">
+          Manage your healthcare from one place.
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">Your account</h3>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Email</p>
+
+            <p className="mt-1 font-medium text-slate-900">{user?.email}</p>
+          </div>
+
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-500">Role</p>
+
+            <p className="mt-1 font-medium text-slate-900">{user?.role}</p>
+          </div>
+        </div>
 
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-4 rounded-lg border px-4 py-2"
+          className="mt-6 rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
         >
           Logout
         </button>
