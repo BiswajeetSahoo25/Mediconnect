@@ -443,26 +443,26 @@ model DoctorLeave {
 // ADDRESSES
 // ========================================
 
-model Address {
-  id           String   @id @default(uuid()) @db.Uuid
-  addressLine1 String   @map("address_line_1") @db.VarChar(255)
-  addressLine2 String?  @map("address_line_2") @db.VarChar(255)
-  landmark     String?  @db.VarChar(255)
-  city         String   @db.VarChar(100)
-  state        String   @db.VarChar(100)
-  country      String   @db.VarChar(100)
-  pincode      String   @db.VarChar(20)
-  latitude     Decimal? @db.Decimal(10, 7)
-  longitude    Decimal? @db.Decimal(10, 7)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  model Address {
+    id           String   @id @default(uuid()) @db.Uuid
+    addressLine1 String   @map("address_line_1") @db.VarChar(255)
+    addressLine2 String?  @map("address_line_2") @db.VarChar(255)
+    landmark     String?  @db.VarChar(255)
+    city         String   @db.VarChar(100)
+    state        String   @db.VarChar(100)
+    country      String   @db.VarChar(100)
+    pincode      String   @db.VarChar(20)
+    latitude     Decimal? @db.Decimal(10, 7)
+    longitude    Decimal? @db.Decimal(10, 7)
+    createdAt    DateTime @default(now()) @map("created_at")
+    updatedAt    DateTime @updatedAt @map("updated_at")
 
-  userAddresses     UserAddress[]
-  facilityAddresses FacilityAddress[]
+    userAddresses     UserAddress[]
+    facilityAddresses FacilityAddress[]
 
-  @@index([city, state])
-  @@map("addresses")
-}
+    @@index([city, state])
+    @@map("addresses")
+  }
 
 model UserAddress {
   id          String   @id @default(uuid()) @db.Uuid
