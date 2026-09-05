@@ -62,7 +62,7 @@
     "declaration": true,
 
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
 
     "noImplicitOverride": true,
     "noUnusedLocals": true,
