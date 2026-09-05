@@ -17,7 +17,8 @@ export function validate<TBody = unknown, TParams = unknown, TQuery = unknown>(
     if (schemas.body) {
       const result = schemas.body.safeParse(req.body);
 
-      if (!result.success) {
+      if (!result.success
+      ) {
         throw new ValidationError("Invalid request body", result.error.issues);
       }
 

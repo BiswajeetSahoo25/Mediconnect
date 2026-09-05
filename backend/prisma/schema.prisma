@@ -99,6 +99,7 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
   updatedBy    String?   @map("updated_by") @db.Uuid
   deletedAt    DateTime? @map("deleted_at")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
 
   // Profile relationships
   patient Patient?
@@ -218,9 +219,9 @@ model Patient {
 model PatientEmergencyContact {
   id                  String   @id @default(uuid()) @db.Uuid
   patientId           String   @map("patient_id") @db.Uuid
-  contactName         String   @map("contact_name") @db.VarChar(150)
-  contactPhone        String   @map("contact_phone") @db.VarChar(20)
-  contactRelationship String   @map("contact_relationship") @db.VarChar(50)
+  contactName         String?   @map("contact_name") @db.VarChar(150)
+  contactPhone        String?   @map("contact_phone") @db.VarChar(20)
+  contactRelationship String?   @map("contact_relationship") @db.VarChar(50)
   isPrimary           Boolean  @default(false) @map("is_primary")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")

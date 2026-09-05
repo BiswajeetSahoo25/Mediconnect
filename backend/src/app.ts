@@ -6,6 +6,7 @@ import { errorMiddleware } from "./middleware/error.middleware.js";
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import patientRouter from "./routes/patient.routes.js";
+import emergencyContactRouter from "./routes/patient-emergency-contact.routes.js";
 
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
@@ -44,6 +45,8 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
 
 app.use("/api/v1/patients", patientRouter);
+
+app.use("/api/v1/patients/me/emergency-contacts", emergencyContactRouter);
 
 app.use(errorMiddleware);
 
