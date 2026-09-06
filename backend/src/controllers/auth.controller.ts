@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 
 import { AuthService } from "../services/auth.service.js";
 import { UnauthorizedError } from "../errors/http-errors.js";
+import type { CreateUserInput } from "../validators/user.validator.js";
 
 export class AuthController {
   private readonly authService: AuthService;
@@ -10,22 +11,31 @@ export class AuthController {
     this.authService = new AuthService();
   }
 
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+  }
+
+  async signup(req: Request, res: Response) {
+    const result = await this.authService.signup(req.validated.body as CreateUserInput);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    return res.status(201).json({ success: true, data: { user: result.user } });
+  }
+
   async login(req: Request, res: Response) {
     const { email, password } = req.body;
 
     const result = await this.authService.login(email, password);
 
-    res.cookie("accessToken", result.accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
 
     return res.status(200).json({
       success: true,
@@ -44,17 +54,7 @@ export class AuthController {
 
     const result = await this.authService.refresh(refreshToken);
 
-    res.cookie("accessToken", result.accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
 
     return res.status(200).json({
       success: true,

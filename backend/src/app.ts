@@ -8,6 +8,10 @@ import authRouter from "./routes/auth.routes.js";
 import patientRouter from "./routes/patient.routes.js";
 import emergencyContactRouter from "./routes/patient-emergency-contact.routes.js";
 import userAddressRouter from "./routes/user-address.routes.js";
+import doctorRouter from "./routes/doctor.routes.js";
+import specializationRouter from "./routes/specialization.routes.js";
+import appointmentRouter from "./routes/appointment.routes.js";
+import doctorApplicationRouter from "./routes/doctor-application.routes.js";
 
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
@@ -50,6 +54,14 @@ app.use("/api/v1/patients", patientRouter);
 app.use("/api/v1/patients/me/emergency-contacts", emergencyContactRouter);
 
 app.use("/api/v1/users/me/addresses", userAddressRouter);
+
+app.use("/api/v1/doctors", doctorRouter);
+
+app.use("/api/v1/specializations", specializationRouter);
+
+app.use("/api/v1/appointments", appointmentRouter);
+
+app.use("/api/v1/doctor-applications", doctorApplicationRouter);
 
 app.use(errorMiddleware);
 

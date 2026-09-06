@@ -1,6 +1,5 @@
 import { Router } from "express";
 
-import { UserController } from "../controllers/user.controller.js";
 import { AuthController } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { createUserSchema, loginSchema } from "../validators/user.validator.js";
@@ -8,7 +7,6 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-const userController = new UserController();
 const authController = new AuthController();
 
 router.post(
@@ -16,7 +14,7 @@ router.post(
   validate({
     body: createUserSchema,
   }),
-  userController.create.bind(userController),
+  authController.signup.bind(authController),
 );
 
 router.post(

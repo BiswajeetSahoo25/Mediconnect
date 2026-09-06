@@ -13,6 +13,21 @@ export const createUserSchema = z.strictObject({
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
+export const updateCurrentUserSchema = z
+  .object({
+    email: z.email().optional(),
+    phone: z
+      .preprocess(
+        (value) => (value === "" ? null : value),
+        z.string().min(10).max(20).nullable().optional(),
+      ),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
+
+export type UpdateCurrentUserInput = z.infer<typeof updateCurrentUserSchema>;
+
 
 export const loginSchema = z.strictObject({
   email: z.email(),

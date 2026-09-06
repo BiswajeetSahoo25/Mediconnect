@@ -9,6 +9,7 @@ export function toUserResponse(user: User) {
     isVerified: user.isVerified,
     isActive: user.isActive,
     lastLoginAt: user.lastLoginAt,
+    onboardingCompletedAt: user.onboardingCompletedAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
