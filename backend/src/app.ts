@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 
 import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
+import { notFoundMiddleware } from "./middleware/not-found.middleware.js";
 
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
@@ -46,6 +47,10 @@ app.use("/api/v1/doctors", doctorRouter);
 app.use("/api/v1/specializations", specializationRouter);
 app.use("/api/v1/appointments", appointmentRouter);
 
+// Handle unmatched routes
+app.use(notFoundMiddleware);
+
+// Global error handler
 app.use(errorMiddleware);
 
 export default app;

@@ -37,6 +37,7 @@ export class AppointmentRepository {
         doctor: {
           isActive: true,
           deletedAt: null,
+          licenseVerificationStatus: "VERIFIED",
         },
         facility: {
           isVerified: true,
@@ -187,5 +188,48 @@ export class AppointmentRepository {
     } catch (error) {
       throw mapPrismaError(error);
     }
+  }
+
+  
+  async findManyForDoctor(
+    doctorUserId: string,
+    where: Prisma.AppointmentWhereInput,
+    skip: number,
+    take: number,
+  ) {
+    const scopedWhere: Prisma.AppointmentWhereInput = {
+      doctorFacility: {
+        doctor: {
+          userId: doctorUserId,
+        },
+      },
+      ...where,
+    };
+
+    const [appointments, total] = await prisma.$transaction([
+      prisma.appointment.findMany({
+        where: scopedWhere,
+        include: appointmentInclude,
+        orderBy: [
+          {
+            appointmentDate: "desc",
+          },
+          {
+            queueNumber: "asc",
+          },
+        ],
+        skip,
+        take,
+      }),
+
+      prisma.appointment.count({
+        where: scopedWhere,
+      }),
+    ]);
+
+    return {
+      appointments,
+      total,
+    };
   }
 }

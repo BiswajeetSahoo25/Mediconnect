@@ -1,7 +1,11 @@
 import { Router } from "express";
 
+import { UserRole } from "../generated/prisma/client.js";
+
 import { AppointmentController } from "../controllers/appointment.controller.js";
+
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 
 import {
@@ -27,6 +31,14 @@ router.post(
   "/",
   validate({ body: createAppointmentSchema }),
   appointmentController.create.bind(appointmentController),
+);
+
+// Doctor's own appointments
+router.get(
+  "/doctor/me",
+  requireRole(UserRole.DOCTOR),
+  validate({ query: listAppointmentsQuerySchema }),
+  appointmentController.getDoctorAppointments.bind(appointmentController),
 );
 
 router.get(

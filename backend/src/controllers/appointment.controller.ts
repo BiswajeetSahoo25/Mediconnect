@@ -11,9 +11,7 @@ import type {
   ListAppointmentsQuery,
 } from "../validators/appointment.validator.js";
 
-const appointmentService = new AppointmentService(
-  new AppointmentRepository(),
-);
+const appointmentService = new AppointmentService(new AppointmentRepository());
 
 export class AppointmentController {
   private getUserId(req: Request) {
@@ -76,6 +74,18 @@ export class AppointmentController {
     return res.status(200).json({
       status: "success",
       data: appointment,
+    });
+  }
+
+  async getDoctorAppointments(req: Request, res: Response) {
+    const appointments = await appointmentService.getDoctorAppointments(
+      this.getUserId(req),
+      req.validated.query as ListAppointmentsQuery,
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: appointments,
     });
   }
 }

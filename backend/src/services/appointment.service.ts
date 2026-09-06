@@ -362,4 +362,48 @@ export class AppointmentService {
       },
     });
   }
+
+  async getDoctorAppointments(userId: string, query: ListAppointmentsQuery) {
+    const { page, limit, status, from, to } = query;
+
+    const where: Prisma.AppointmentWhereInput = {
+      ...(status ? { status } : {}),
+
+      ...(from || to
+        ? {
+            appointmentDate: {
+              ...(from
+                ? {
+                    gte: startOfDay(from),
+                  }
+                : {}),
+
+              ...(to
+                ? {
+                    lte: startOfDay(to),
+                  }
+                : {}),
+            },
+          }
+        : {}),
+    };
+
+    const { appointments, total } =
+      await this.appointmentRepository.findManyForDoctor(
+        userId,
+        where,
+        (page - 1) * limit,
+        limit,
+      );
+
+    return {
+      items: appointments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }
