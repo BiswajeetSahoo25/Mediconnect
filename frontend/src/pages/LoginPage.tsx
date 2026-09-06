@@ -8,7 +8,7 @@ import {
   type LoginFormData,
 } from "../validators/login.validator";
 import { ApiError, loginUser } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<
     z.input<typeof loginSchema>,
-    any,
+    undefined,
     z.output<typeof loginSchema>
   >({
     resolver: zodResolver(loginSchema),
@@ -29,11 +29,14 @@ function LoginPage() {
 
   async function onSubmit(data: LoginFormData) {
     try {
-      await loginUser(data.email, data.password);
+      const result = await loginUser(data.email, data.password);
 
       await refreshUser();
 
-      navigate("/dashboard");
+      navigate(
+        result.data.user.onboardingCompletedAt ? "/dashboard" : "/onboarding",
+        { replace: true },
+      );
     } catch (error) {
       if (error instanceof ApiError) {
         setError("root", {
@@ -44,7 +47,10 @@ function LoginPage() {
         return;
       }
 
-      console.error(error);
+      setError("root", {
+        type: "server",
+        message: "We could not sign you in. Please try again.",
+      });
     }
   }
 

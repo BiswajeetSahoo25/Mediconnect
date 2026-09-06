@@ -5,7 +5,7 @@ function Sidebar() {
 
   const navigation = [
     {
-      label: "Dashboard",
+      label: "My dashboard",
       path: "/dashboard",
     },
     {
@@ -17,8 +17,20 @@ function Sidebar() {
       path: "/appointments",
     },
     {
-      label: "Medical Records",
+      label: "Medical records",
       path: "/records",
+    },
+    {
+      label: "Apply as doctor",
+      path: "/apply-as-doctor",
+    },
+    {
+      label: "Doctor dashboard",
+      path: "/doctor-dashboard",
+    },
+    {
+      label: "Account settings",
+      path: "/account",
     },
   ];
 

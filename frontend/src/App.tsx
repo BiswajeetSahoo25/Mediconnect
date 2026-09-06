@@ -11,6 +11,13 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import AccountPage from "./pages/AccountPage";
+import DoctorDashboardPage from "./pages/DoctorDashboardPage";
+import DoctorApplicationPage from "./pages/DoctorApplicationPage";
+import FeaturePage from "./pages/FeaturePage";
+import OnboardingRequiredRoute from "./components/OnboardingRequiredRoute";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   return (
@@ -31,10 +38,21 @@ function App() {
 
         {/* Protected application */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+
+          <Route element={<OnboardingRequiredRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/doctor-dashboard" element={<DoctorDashboardPage />} />
+            <Route path="/apply-as-doctor" element={<DoctorApplicationPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/doctors" element={<FeaturePage eyebrow="Care directory" title="Find a doctor" description="Browse approved clinicians, compare available services and book an appointment." action={{ label: "View my appointments", to: "/appointments" }} />} />
+            <Route path="/appointments" element={<FeaturePage eyebrow="Your care plan" title="Appointments" description="Your upcoming and previous appointments will be listed here as you book care." action={{ label: "Find a doctor", to: "/doctors" }} />} />
+            <Route path="/records" element={<FeaturePage eyebrow="Health information" title="Medical records" description="Your verified records, test results and visit documents will appear here." />} />
+          </Route>
           </Route>
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
