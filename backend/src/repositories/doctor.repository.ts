@@ -27,7 +27,7 @@ export class DoctorRepository {
   }
 
   async findById(id: string) {
-    return prisma.doctor.findFirst({
+    return prisma.doctor.findFirst({  
       where: { id, isActive: true, deletedAt: null },
       include: {
         specializations: { include: { specialization: true } },
@@ -50,14 +50,9 @@ export class DoctorRepository {
         isActive: true,
         doctor: { isActive: true, deletedAt: null },
       },
-      include: { availability: { where: { isActive: true } } },
-    });
-  }
-
-  async findScheduledSlots(doctorFacilityId: string, appointmentDate: Date) {
-    return prisma.appointment.findMany({
-      where: { doctorFacilityId, appointmentDate, status: "SCHEDULED" },
-      select: { startTime: true, endTime: true },
+      include: {
+        availability: { where: { isActive: true } },
+      },
     });
   }
 
@@ -70,6 +65,23 @@ export class DoctorRepository {
   async createApplication(data: Prisma.DoctorCreateInput) {
     try {
       return await prisma.doctor.create({ data });
+    } catch (error) {
+      throw mapPrismaError(error);
+    }
+  }
+
+  async findByUserId(userId: string) {
+    return prisma.doctor.findUnique({
+      where: { userId },
+    });
+  }
+
+  async update(id: string, data: Prisma.DoctorUpdateInput) {
+    try {
+      return await prisma.doctor.update({
+        where: { id },
+        data,
+      });
     } catch (error) {
       throw mapPrismaError(error);
     }

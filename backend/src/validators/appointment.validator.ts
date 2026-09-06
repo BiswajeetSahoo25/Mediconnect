@@ -8,50 +8,60 @@ const appointmentTypes = [
   "SPECIALIZED",
 ] as const;
 
-const timeSchema = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must use HH:mm format");
+const appointmentModels = ["IN_PERSON", "VIDEO_CALL", "PHONE_CALL"] as const;
 
-const appointmentScheduleSchema = z
-  .object({
-    appointmentDate: z.coerce.date(),
-    startTime: timeSchema,
-    endTime: timeSchema,
-  })
-  .refine((data) => data.endTime > data.startTime, {
-    message: "End time must be after start time",
-    path: ["endTime"],
-  });
+const appointmentStatuses = [
+  "SCHEDULED",
+  "COMPLETED",
+  "CANCELLED",
+  "RESCHEDULED",
+  "NO_SHOW",
+] as const;
 
-export const createAppointmentSchema = appointmentScheduleSchema.safeExtend({
+export const createAppointmentSchema = z.object({
   doctorFacilityId: z.string().uuid(),
+
   appointmentType: z.enum(appointmentTypes),
+
+  appointmentModel: z.enum(appointmentModels),
+
+  appointmentDate: z.coerce.date(),
+
   reason: z.string().trim().min(1).max(2000).optional(),
+
   patientNotes: z.string().trim().min(1).max(2000).optional(),
-});
-
-export const rescheduleAppointmentSchema = appointmentScheduleSchema;
-
-export const cancelAppointmentSchema = z.object({
-  reason: z.string().trim().min(1).max(2000),
 });
 
 export const appointmentIdSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const doctorFacilityIdSchema = z.object({
+  doctorFacilityId: z.string().uuid(),
+});
+
 export const listAppointmentsQuerySchema = z.object({
-  status: z
-    .enum(["SCHEDULED", "COMPLETED", "CANCELLED", "RESCHEDULED", "NO_SHOW"])
-    .optional(),
+  status: z.enum(appointmentStatuses).optional(),
+
   from: z.coerce.date().optional(),
+
   to: z.coerce.date().optional(),
+
   page: z.coerce.number().int().min(1).default(1),
+
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
+export const cancelAppointmentSchema = z.object({
+  reason: z.string().trim().min(1).max(2000),
+});
+
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
-export type RescheduleAppointmentInput = z.infer<typeof rescheduleAppointmentSchema>;
-export type CancelAppointmentInput = z.infer<typeof cancelAppointmentSchema>;
+
 export type AppointmentIdInput = z.infer<typeof appointmentIdSchema>;
+
+export type DoctorFacilityIdInput = z.infer<typeof doctorFacilityIdSchema>;
+
 export type ListAppointmentsQuery = z.infer<typeof listAppointmentsQuerySchema>;
+
+export type CancelAppointmentInput = z.infer<typeof cancelAppointmentSchema>;

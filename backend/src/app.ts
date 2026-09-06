@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
+import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
 import userRouter from "./routes/user.routes.js";
@@ -11,10 +13,6 @@ import userAddressRouter from "./routes/user-address.routes.js";
 import doctorRouter from "./routes/doctor.routes.js";
 import specializationRouter from "./routes/specialization.routes.js";
 import appointmentRouter from "./routes/appointment.routes.js";
-import doctorApplicationRouter from "./routes/doctor-application.routes.js";
-
-import cookieParser from "cookie-parser";
-import { env } from "./config/env.js";
 
 const app = express();
 
@@ -39,29 +37,14 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.post("/test-login", (_req, res) => {
-  res.status(200).json({
-    message: "Direct route works",
-  });
-});
-
 app.use("/api/v1/users", userRouter);
-
-app.use("/api/v1/auth", authRouter);
-
-app.use("/api/v1/patients", patientRouter);
-
-app.use("/api/v1/patients/me/emergency-contacts", emergencyContactRouter);
-
 app.use("/api/v1/users/me/addresses", userAddressRouter);
-
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/patients", patientRouter);
+app.use("/api/v1/patients/me/emergency-contacts", emergencyContactRouter);
 app.use("/api/v1/doctors", doctorRouter);
-
 app.use("/api/v1/specializations", specializationRouter);
-
 app.use("/api/v1/appointments", appointmentRouter);
-
-app.use("/api/v1/doctor-applications", doctorApplicationRouter);
 
 app.use(errorMiddleware);
 
