@@ -10,6 +10,7 @@ import type {
   AvailableSlotsQuery,
   DoctorIdInput,
   ListDoctorsQuery,
+  RevokeDoctorInput,
   UpdateDoctorProfileInput,
 } from "../validators/doctor.validator.js";
 
@@ -39,8 +40,7 @@ export class DoctorController {
   }
 
   async getSpecializations(_req: Request, res: Response) {
-    const specializations =
-      await doctorService.getSpecializations();
+    const specializations = await doctorService.getSpecializations();
 
     return res.status(200).json({
       status: "success",
@@ -51,11 +51,10 @@ export class DoctorController {
   async getAvailableSlots(req: Request, res: Response) {
     const { id } = req.validated.params as DoctorIdInput;
 
-    const availability =
-      await doctorService.getAvailableSlots(
-        id,
-        req.validated.query as AvailableSlotsQuery,
-      );
+    const availability = await doctorService.getAvailableSlots(
+      id,
+      req.validated.query as AvailableSlotsQuery,
+    );
 
     return res.status(200).json({
       status: "success",
@@ -70,11 +69,10 @@ export class DoctorController {
       throw new UnauthorizedError("Authentication required");
     }
 
-    const application =
-      await doctorService.createApplication(
-        userId,
-        req.validated.body as ApplyDoctorInput,
-      );
+    const application = await doctorService.createApplication(
+      userId,
+      req.validated.body as ApplyDoctorInput,
+    );
 
     return res.status(201).json({
       status: "success",
@@ -89,8 +87,7 @@ export class DoctorController {
       throw new UnauthorizedError("Authentication required");
     }
 
-    const doctor =
-      await doctorService.getMyDoctorProfile(userId);
+    const doctor = await doctorService.getMyDoctorProfile(userId);
 
     return res.status(200).json({
       status: "success",
@@ -105,14 +102,63 @@ export class DoctorController {
       throw new UnauthorizedError("Authentication required");
     }
 
-    const data =
-      req.validated.body as UpdateDoctorProfileInput;
+    const data = req.validated.body as UpdateDoctorProfileInput;
 
-    const doctor =
-      await doctorService.updateMyDoctorProfile(
-        userId,
-        data,
-      );
+    const doctor = await doctorService.updateMyDoctorProfile(userId, data);
+
+    return res.status(200).json({
+      status: "success",
+      data: doctor,
+    });
+  }
+
+  async approveDoctor(req: Request, res: Response) {
+    const { id: doctorId } = req.validated.params as DoctorIdInput;
+    const adminUserId = req.user?.sub;
+
+    if (!adminUserId) {
+      throw new UnauthorizedError();
+    }
+
+    const doctor = await doctorService.approveDoctor(doctorId, adminUserId);
+
+    return res.status(200).json({
+      status: "success",
+      data: doctor,
+    });
+  }
+
+  async revokeDoctor(req: Request, res: Response) {
+    const { id: doctorId } = req.validated.params as DoctorIdInput;
+    const adminUserId = req.user?.sub;
+
+    if (!adminUserId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    const { reason } = req.validated.body as RevokeDoctorInput;
+
+    const doctor = await doctorService.revokeDoctor(
+      doctorId,
+      adminUserId,
+      reason,
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: doctor,
+    });
+  }
+  
+  async reverifyDoctor(req: Request, res: Response) {
+    const { id: doctorId } = req.validated.params as DoctorIdInput;
+    const adminUserId = req.user?.sub;
+
+    if (!adminUserId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    const doctor = await doctorService.reverifyDoctor(doctorId, adminUserId);
 
     return res.status(200).json({
       status: "success",

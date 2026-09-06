@@ -49,3 +49,9 @@ export type ApplyDoctorInput = z.infer<typeof applyDoctorSchema>;
 export type UpdateDoctorProfileInput = z.infer<
   typeof updateDoctorProfileSchema
 >;
+
+export const revokeDoctorSchema = z.object({
+  reason: z.string().trim().min(1).max(3000),
+});
+
+export type RevokeDoctorInput = z.infer<typeof revokeDoctorSchema>;

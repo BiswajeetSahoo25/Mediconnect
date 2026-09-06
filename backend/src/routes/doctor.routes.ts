@@ -1,7 +1,11 @@
 import { Router } from "express";
 
+import { UserRole } from "../generated/prisma/client.js";
+
 import { DoctorController } from "../controllers/doctor.controller.js";
+
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireRole } from "../middleware/role.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 
 import {
@@ -9,6 +13,7 @@ import {
   availableSlotsQuerySchema,
   doctorIdSchema,
   listDoctorsQuerySchema,
+  revokeDoctorSchema,
   updateDoctorProfileSchema,
 } from "../validators/doctor.validator.js";
 
@@ -41,6 +46,36 @@ router.patch(
   requireAuth,
   validate({ body: updateDoctorProfileSchema }),
   doctorController.updateMyDoctorProfile.bind(doctorController),
+);
+
+// Admin-only doctor application approval
+router.patch(
+  "/applications/:id/approve",
+  requireAuth,
+  requireRole(UserRole.ADMIN),
+  validate({ params: doctorIdSchema }),
+  doctorController.approveDoctor.bind(doctorController),
+);
+
+// Admin-only doctor application revocation
+router.patch(
+  "/applications/:id/revoke",
+  requireAuth,
+  requireRole(UserRole.ADMIN),
+  validate({
+    params: doctorIdSchema,
+    body: revokeDoctorSchema,
+  }),
+  doctorController.revokeDoctor.bind(doctorController),
+);
+
+// Admin-only doctor re-verification
+router.patch(
+  "/applications/:id/reverify",
+  requireAuth,
+  requireRole(UserRole.ADMIN),
+  validate({ params: doctorIdSchema }),
+  doctorController.reverifyDoctor.bind(doctorController),
 );
 
 // Doctor application

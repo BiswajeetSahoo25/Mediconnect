@@ -1,6 +1,11 @@
-import { Prisma } from "../generated/prisma/client.js";
+import { Prisma, LicenseStatus } from "../generated/prisma/client.js";
+import {
+  ConflictError,
+  BadRequestError,
+  NotFoundError,
+} from "../errors/http-errors.js";
+
 import { DoctorRepository } from "../repositories/doctor.repository.js";
-import { BadRequestError, NotFoundError } from "../errors/http-errors.js";
 import type {
   ApplyDoctorInput,
   AvailableSlotsQuery,
@@ -70,12 +75,11 @@ export class DoctorService {
         : {}),
     };
 
-    const { doctors, total } =
-      await this.doctorRepository.findMany(
-        where,
-        (page - 1) * limit,
-        limit,
-      );
+    const { doctors, total } = await this.doctorRepository.findMany(
+      where,
+      (page - 1) * limit,
+      limit,
+    );
 
     return {
       items: doctors,
@@ -102,17 +106,11 @@ export class DoctorService {
     return this.doctorRepository.getSpecializations();
   }
 
-  async createApplication(
-    userId: string,
-    input: ApplyDoctorInput,
-  ) {
-    const existingDoctor =
-      await this.doctorRepository.findByUserId(userId);
+  async createApplication(userId: string, input: ApplyDoctorInput) {
+    const existingDoctor = await this.doctorRepository.findByUserId(userId);
 
     if (existingDoctor) {
-      throw new BadRequestError(
-        "Doctor profile already exists for this user",
-      );
+      throw new BadRequestError("Doctor profile already exists for this user");
     }
 
     return this.doctorRepository.createApplication({
@@ -128,10 +126,7 @@ export class DoctorService {
     });
   }
 
-  async getAvailableSlots(
-    doctorId: string,
-    query: AvailableSlotsQuery,
-  ) {
+  async getAvailableSlots(doctorId: string, query: AvailableSlotsQuery) {
     const date = startOfDay(query.date);
     const today = startOfDay(new Date());
 
@@ -141,24 +136,18 @@ export class DoctorService {
       );
     }
 
-    const assignment =
-      await this.doctorRepository.findActiveFacilityAssignment(
-        query.doctorFacilityId,
-      );
+    const assignment = await this.doctorRepository.findActiveFacilityAssignment(
+      query.doctorFacilityId,
+    );
 
     if (!assignment || assignment.doctorId !== doctorId) {
-      throw new NotFoundError(
-        "Doctor facility assignment not found",
-      );
+      throw new NotFoundError("Doctor facility assignment not found");
     }
 
     const dayOfWeek = date.getUTCDay();
 
     const windows = assignment.availability
-      .filter(
-        (availability) =>
-          availability.dayOfWeek === dayOfWeek,
-      )
+      .filter((availability) => availability.dayOfWeek === dayOfWeek)
       .map((availability) => ({
         startTime: formatTime(availability.startTime),
         endTime: formatTime(availability.endTime),
@@ -168,16 +157,13 @@ export class DoctorService {
       doctorFacilityId: assignment.id,
       date,
       windows,
-      onlineBookingEnabled:
-        assignment.onlineBookingEnabled,
-      onlineBookingLimit:
-        assignment.onlineBookingLimit,
+      onlineBookingEnabled: assignment.onlineBookingEnabled,
+      onlineBookingLimit: assignment.onlineBookingLimit,
     };
   }
 
   async getMyDoctorProfile(userId: string) {
-    const doctor =
-      await this.doctorRepository.findByUserId(userId);
+    const doctor = await this.doctorRepository.findByUserId(userId);
 
     if (!doctor) {
       throw new NotFoundError("Doctor profile not found");
@@ -186,12 +172,8 @@ export class DoctorService {
     return doctor;
   }
 
-  async updateMyDoctorProfile(
-    userId: string,
-    data: UpdateDoctorProfileInput,
-  ) {
-    const doctor =
-      await this.doctorRepository.findByUserId(userId);
+  async updateMyDoctorProfile(userId: string, data: UpdateDoctorProfileInput) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
 
     if (!doctor) {
       throw new NotFoundError("Doctor profile not found");
@@ -208,17 +190,56 @@ export class DoctorService {
     }
 
     if (data.yearsOfExperience !== undefined) {
-      updateData.yearsOfExperience =
-        data.yearsOfExperience;
+      updateData.yearsOfExperience = data.yearsOfExperience;
     }
 
     if (data.about !== undefined) {
       updateData.about = data.about;
     }
 
-    return this.doctorRepository.update(
-      doctor.id,
-      updateData,
-    );
+    return this.doctorRepository.update(doctor.id, updateData);
+  }
+
+  async approveDoctor(doctorId: string, adminUserId: string) {
+    const doctor = await this.doctorRepository.findById(doctorId);
+
+    if (!doctor) {
+      throw new NotFoundError("Doctor not found");
+    }
+
+    if (doctor.licenseVerificationStatus !== LicenseStatus.PENDING) {
+      throw new ConflictError("Doctor application has already been processed");
+    }
+
+    return this.doctorRepository.approveDoctor(doctorId, adminUserId);
+  }
+
+  async revokeDoctor(doctorId: string, adminUserId: string, reason: string) {
+    const doctor = await this.doctorRepository.findById(doctorId);
+
+    if (!doctor) {
+      throw new NotFoundError("Doctor not found");
+    }
+
+    if (doctor.licenseVerificationStatus !== LicenseStatus.VERIFIED) {
+      throw new ConflictError("Only a verified doctor can be revoked");
+    }
+
+    return this.doctorRepository.revokeDoctor(doctorId, adminUserId, reason);
+  }
+  
+  async reverifyDoctor(doctorId: string, adminUserId: string) {
+    const doctor =
+      await this.doctorRepository.findByIdIncludingInactive(doctorId);
+
+    if (!doctor) {
+      throw new NotFoundError("Doctor not found");
+    }
+
+    if (doctor.licenseVerificationStatus !== LicenseStatus.REVOKED) {
+      throw new ConflictError("Only a revoked doctor can be re-verified");
+    }
+
+    return this.doctorRepository.reverifyDoctor(doctorId, adminUserId);
   }
 }
