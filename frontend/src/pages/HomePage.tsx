@@ -6,6 +6,9 @@ import type { ArticlePreview } from "../types/article";
 const heroImage =
   "https://www.figma.com/api/mcp/asset/9b0fb92d-240e-40e2-a99e-1ffc93fe07d8.png";
 
+const healthcareImage =
+  "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=85";
+
 const searchIcon =
   "https://www.figma.com/api/mcp/asset/1bd7da44-fd25-4754-97c3-11f13b956965.svg";
 
@@ -160,33 +163,6 @@ const recommendedDoctors = [
   },
 ];
 
-const nearbyFacilities = [
-  {
-    name: "Apollo Clinic",
-    type: "Multi-specialty Clinic",
-    distance: "1.2 km away",
-    address: "100 Feet Road, Indiranagar",
-    rating: "4.8",
-    services: "25+ Specialties",
-  },
-  {
-    name: "Manipal Hospital",
-    type: "Multi-specialty Hospital",
-    distance: "2.4 km away",
-    address: "HAL Airport Road, Bengaluru",
-    rating: "4.7",
-    services: "40+ Specialties",
-  },
-  {
-    name: "Cloudnine Hospital",
-    type: "Women & Children",
-    distance: "3.1 km away",
-    address: "Old Airport Road, Bengaluru",
-    rating: "4.9",
-    services: "15+ Specialties",
-  },
-];
-
 const defaultArticleImages: Record<string, string> = {
   "Heart Health":
     "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1200&q=80",
@@ -262,14 +238,14 @@ function HomePage() {
                     placeholder="Search doctors, specialties, clinics..."
                     className="w-full bg-transparent text-base text-[#334155] outline-none placeholder:text-[#64748b]"
                   />
-                </div>
 
-                <Link
-                  to="/doctors"
-                  className="shrink-0 rounded-lg bg-[#1a73e8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
-                >
-                  Find Doctors
-                </Link>
+                  <Link
+                    to="/doctors"
+                    className="shrink-0 rounded-lg bg-[#1a73e8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
+                  >
+                    Find Doctors
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -457,83 +433,43 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Nearby Healthcare Facilities */}
+      {/* Healthcare Discovery */}
       <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-['Outfit'] text-2xl font-bold">
-              Healthcare Near You
-            </h2>
+        <div className="overflow-hidden rounded-3xl border border-[#dbeafe] bg-[#eaf6ff]">
+          <div className="grid lg:grid-cols-[1fr_0.9fr]">
+            <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+              <span className="w-fit rounded-md bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
+                Healthcare Discovery
+              </span>
 
-            <p className="mt-1 text-sm text-[#64748b]">
-              Find trusted clinics and hospitals around your location
-            </p>
-          </div>
+              <h2 className="mt-5 max-w-xl font-['Outfit'] text-3xl font-bold leading-tight text-[#0f172a] sm:text-4xl">
+                Find healthcare near you
+              </h2>
 
-          <Link
-            to="/doctors"
-            className="shrink-0 text-sm font-semibold text-[#1a73e8] hover:underline"
-          >
-            Explore Nearby →
-          </Link>
-        </div>
+              <p className="mt-4 max-w-xl text-base leading-7 text-[#64748b]">
+                Need medical help nearby? Discover hospitals and clinics around
+                your location, or search for healthcare facilities in any city.
+              </p>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {nearbyFacilities.map((facility) => (
-            <article
-              key={facility.name}
-              className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
-            >
-              <div className="flex h-40 items-center justify-center bg-[#f0f5fd]">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                  🏥
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-['Outfit'] text-lg font-semibold">
-                      {facility.name}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-[#1a73e8]">
-                      {facility.type}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-1 rounded-md bg-[#fff7ed] px-2 py-1">
-                    <span className="text-xs">★</span>
-                    <span className="text-xs font-bold">{facility.rating}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2 text-sm text-[#64748b]">
-                  <p className="flex items-center gap-2">
-                    <span>📍</span>
-                    {facility.distance}
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <span>🏠</span>
-                    <span className="truncate">{facility.address}</span>
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <span>⚕️</span>
-                    {facility.services}
-                  </p>
-                </div>
-
+              <div className="mt-7">
                 <Link
-                  to="/doctors"
-                  className="mt-5 flex w-full items-center justify-center rounded-lg border border-[#1a73e8] px-5 py-2.5 text-sm font-semibold text-[#1a73e8] transition hover:bg-[#f0f5fd]"
+                  to="/healthcare"
+                  className="inline-flex items-center rounded-lg bg-[#1a73e8] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
                 >
-                  View Doctors
+                  Explore Healthcare
+                  <span className="ml-2">→</span>
                 </Link>
               </div>
-            </article>
-          ))}
+            </div>
+
+            <div className="min-h-[280px] lg:min-h-full">
+              <img
+                src={healthcareImage}
+                alt="Healthcare professional providing medical care"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
         </div>
       </section>
 

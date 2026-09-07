@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useUserLocation } from "../hooks/useUserLocation";
 import { mapPinIcon } from "../assets/icons";
+
 const plusIcon =
   "https://www.figma.com/api/mcp/asset/8c977e73-c7a2-4348-8ad7-9bceb027f1a7.svg";
 
@@ -9,13 +11,19 @@ const chevronDownIcon =
 
 function Navbar() {
   const { isAuthenticated, user } = useAuth();
+  const { location, loading } = useUserLocation();
+
+  const locationText = loading
+    ? "Detecting location..."
+    : location?.city
+      ? `${location.city}${location.state ? `, ${location.state}` : ""}`
+      : "Location unavailable";
 
   return (
     <header className="border-b border-[#e2e8f0] bg-white">
       <nav className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 lg:px-20">
         {/* Left: Logo + Location */}
         <div className="flex items-center gap-10">
-          {/* Logo */}
           <Link
             to="/"
             aria-label="Medico home"
@@ -30,15 +38,11 @@ function Navbar() {
             </span>
           </Link>
 
-          {/* Location */}
-          <button
-            type="button"
-            className="hidden h-8 items-center gap-2 rounded-lg bg-[#f0f5fd] px-3 md:flex"
-          >
-            <img src={mapPinIcon} alt="" className="h-6 w-6  shrink-0" />
+          <div className="hidden h-8 items-center gap-2 rounded-lg bg-[#f0f5fd] px-3 md:flex">
+            <img src={mapPinIcon} alt="" className="h-6 w-6 shrink-0" />
 
             <span className="whitespace-nowrap font-['DM_Sans'] text-[13px] font-semibold leading-none text-[#1a73e8]">
-              Bangalore, KA
+              {locationText}
             </span>
 
             <img
@@ -46,7 +50,7 @@ function Navbar() {
               alt=""
               className="ml-0.5 h-3.5 w-3.5 shrink-0"
             />
-          </button>
+          </div>
         </div>
 
         {/* Center navigation */}
@@ -63,6 +67,13 @@ function Navbar() {
             className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
           >
             Find Doctors
+          </Link>
+
+          <Link
+            to="/healthcare"
+            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+          >
+            Find Healthcare
           </Link>
 
           <Link
@@ -91,7 +102,6 @@ function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              {/* Join as Provider - LEFT of account */}
               <Link
                 to="/apply-as-doctor"
                 className="hidden rounded-lg border border-[#e2e8f0] bg-white px-6 py-3 font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-all hover:border-[#1a73e8] hover:bg-[#f8fbff] sm:flex"
@@ -99,7 +109,6 @@ function Navbar() {
                 Join as Provider
               </Link>
 
-              {/* Account */}
               <Link
                 to="/account"
                 aria-label="Open account"
@@ -112,7 +121,6 @@ function Navbar() {
             </>
           ) : (
             <>
-              {/* Join as Provider - LEFT */}
               <Link
                 to="/signup"
                 className="whitespace-nowrap rounded-lg border border-[#e2e8f0] bg-white px-6 py-3 font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-all hover:border-[#1a73e8] hover:bg-[#f8fbff]"
@@ -120,7 +128,6 @@ function Navbar() {
                 Join as Provider
               </Link>
 
-              {/* Login / Sign Up - RIGHT */}
               <Link
                 to="/login"
                 className="whitespace-nowrap font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-colors hover:text-[#1a73e8]"
@@ -147,6 +154,13 @@ function Navbar() {
             className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
           >
             Find Doctors
+          </Link>
+
+          <Link
+            to="/healthcare"
+            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+          >
+            Find Healthcare
           </Link>
 
           <Link

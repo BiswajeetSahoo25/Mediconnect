@@ -13,6 +13,7 @@ import doctorRouter from "./routes/doctor.routes.js";
 import specializationRouter from "./routes/specialization.routes.js";
 import appointmentRouter from "./routes/appointment.routes.js";
 import articleRouter from "./routes/article.routes.js";
+import facilityRouter from "./routes/facility.routes.js";
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/api/v1/doctors", doctorRouter);
 app.use("/api/v1/specializations", specializationRouter);
 app.use("/api/v1/appointments", appointmentRouter);
 app.use("/api/v1/articles", articleRouter);
+app.use("/api/v1/facilities", facilityRouter);
 
 // Handle unmatched routes
 
