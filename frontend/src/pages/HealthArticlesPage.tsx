@@ -1,15 +1,7 @@
-import { Link } from "react-router-dom";
-
-type Article = {
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  source: string;
-  readTime: string;
-  publishedAt: string;
-  imageUrl: string;
-};
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { getArticles } from "../services/article.service";
+import type { ArticlePreview } from "../types/article";
 
 const categories = [
   "All",
@@ -20,91 +12,52 @@ const categories = [
   "Preventive Care",
 ];
 
-const articles: Article[] = [
-  {
-    slug: "building-a-healthier-daily-routine",
-    title: "Building a Healthier Daily Routine",
-    excerpt:
-      "Small, consistent habits can make a meaningful difference to your overall health and wellbeing.",
-    category: "Wellness",
-    source: "Medico",
-    readTime: "5 min read",
-    publishedAt: "Sep 7, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    slug: "simple-ways-to-stay-active",
-    title: "Simple Ways to Stay Active Every Day",
-    excerpt:
-      "You don't always need a complicated workout plan. Discover simple ways to add more movement to your day.",
-    category: "Fitness",
-    source: "WHO",
-    readTime: "4 min read",
-    publishedAt: "Sep 5, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    slug: "understanding-balanced-nutrition",
-    title: "Understanding the Basics of Balanced Nutrition",
-    excerpt:
-      "Learn how a balanced diet can support energy, wellbeing, and long-term health.",
-    category: "Nutrition",
-    source: "NHS",
-    readTime: "6 min read",
-    publishedAt: "Sep 3, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    slug: "protecting-your-mental-wellbeing",
-    title: "Taking Care of Your Mental Wellbeing",
-    excerpt:
-      "Understanding your mental wellbeing is an important part of taking care of your overall health.",
-    category: "Mental Health",
-    source: "WHO",
-    readTime: "5 min read",
-    publishedAt: "Sep 1, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    slug: "why-preventive-care-matters",
-    title: "Why Preventive Healthcare Matters",
-    excerpt:
-      "Regular health checks and preventive care can help you make informed decisions about your health.",
-    category: "Preventive Care",
-    source: "NHS",
-    readTime: "5 min read",
-    publishedAt: "Aug 30, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    slug: "getting-better-sleep",
-    title: "Simple Habits for Better Sleep",
-    excerpt:
-      "A few changes to your daily routine can help create healthier sleep habits.",
-    category: "Wellness",
-    source: "Medico",
-    readTime: "4 min read",
-    publishedAt: "Aug 28, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1511295742362-92c96b1cf484?auto=format&fit=crop&w=1200&q=80",
-  },
-];
+const defaultArticleImages: Record<string, string> = {
+  Fitness:
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
+  Nutrition:
+    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+  Wellness:
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
+  "Mental Health":
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
+  "Preventive Care":
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+  default:
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+};
 
-function ArticleCard({ article }: { article: Article }) {
+function getDefaultArticleImage(category: string) {
+  return defaultArticleImages[category] ?? defaultArticleImages.default;
+}
+
+function formatPublishedDate(date: string) {
+  if (!date) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(date));
+}
+
+function ArticleCard({ article }: { article: ArticlePreview }) {
+  const fallbackImage = getDefaultArticleImage(article.category);
+
   return (
     <Link
       to={`/health-articles/${article.slug}`}
       className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50"
     >
-      <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+      <div className="aspect-video overflow-hidden bg-slate-100">
         <img
-          src={article.imageUrl}
+          src={article.imageUrl || fallbackImage}
           alt={article.title}
+          onError={(event) => {
+            if (event.currentTarget.src !== fallbackImage) {
+              event.currentTarget.src = fallbackImage;
+            }
+          }}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
       </div>
@@ -116,7 +69,7 @@ function ArticleCard({ article }: { article: Article }) {
           </span>
 
           <span className="font-['DM_Sans'] text-xs text-slate-400">
-            {article.readTime}
+            {formatPublishedDate(article.publishedAt)}
           </span>
         </div>
 
@@ -133,8 +86,8 @@ function ArticleCard({ article }: { article: Article }) {
             {article.source}
           </span>
 
-          <span className="font-['DM_Sans'] text-xs text-slate-400">
-            {article.publishedAt}
+          <span className="font-['DM_Sans'] text-xs font-semibold text-[#1a73e8]">
+            Read article →
           </span>
         </div>
       </div>
@@ -143,9 +96,115 @@ function ArticleCard({ article }: { article: Article }) {
 }
 
 function HealthArticlesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const selectedCategory = searchParams.get("category") || "All";
+  const search = searchParams.get("search") || "";
+
+  const pageParam = Number(searchParams.get("page"));
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
+
+  const [articles, setArticles] = useState<ArticlePreview[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await getArticles({
+          category: selectedCategory === "All" ? undefined : selectedCategory,
+          search: search.trim() || undefined,
+          page,
+          limit: 20,
+        });
+
+        setArticles(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotalArticles(response.pagination.total);
+      } catch {
+        setError("Unable to load articles. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadArticles();
+  }, [selectedCategory, search, page]);
+
+  function updateParams(updates: {
+    category?: string;
+    search?: string;
+    page?: number;
+  }) {
+    const params = new URLSearchParams(searchParams);
+
+    if (updates.category !== undefined) {
+      if (updates.category === "All") {
+        params.delete("category");
+      } else {
+        params.set("category", updates.category);
+      }
+    }
+
+    if (updates.search !== undefined) {
+      if (updates.search.trim()) {
+        params.set("search", updates.search);
+      } else {
+        params.delete("search");
+      }
+    }
+
+    if (updates.page !== undefined) {
+      if (updates.page === 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(updates.page));
+      }
+    }
+
+    setSearchParams(params);
+  }
+
+  function handleCategoryChange(category: string) {
+    updateParams({
+      category,
+      page: 1,
+    });
+  }
+
+  function handleSearchChange(value: string) {
+    updateParams({
+      search: value,
+      page: 1,
+    });
+  }
+
+  function handlePreviousPage() {
+    if (page > 1) {
+      updateParams({ page: page - 1 });
+    }
+  }
+
+  function handleNextPage() {
+    if (page < totalPages) {
+      updateParams({ page: page + 1 });
+    }
+  }
+
+  function handlePageChange(pageNumber: number) {
+    updateParams({ page: pageNumber });
+  }
+
+  const featuredArticle = articles[0];
+  const remainingArticles = articles.slice(1);
+
   return (
     <div className="bg-[#f8fafc] text-slate-900">
-      {/* Header */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-20">
           <div className="max-w-3xl">
@@ -164,7 +223,6 @@ function HealthArticlesPage() {
             </p>
           </div>
 
-          {/* Search */}
           <div className="mt-10 max-w-2xl">
             <label htmlFor="article-search" className="sr-only">
               Search articles
@@ -188,6 +246,8 @@ function HealthArticlesPage() {
               <input
                 id="article-search"
                 type="search"
+                value={search}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 placeholder="Search health articles..."
                 className="ml-3 w-full bg-transparent font-['DM_Sans'] text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
@@ -196,26 +256,28 @@ function HealthArticlesPage() {
         </div>
       </section>
 
-      {/* Articles */}
       <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-        {/* Categories */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category, index) => (
-            <button
-              key={category}
-              type="button"
-              className={`whitespace-nowrap rounded-full px-4 py-2 font-['DM_Sans'] text-sm font-medium transition ${
-                index === 0
-                  ? "bg-[#1a73e8] text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-[#1a73e8]"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const isSelected = selectedCategory === category;
+
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => handleCategoryChange(category)}
+                className={`whitespace-nowrap rounded-full px-4 py-2 font-['DM_Sans'] text-sm font-medium transition ${
+                  isSelected
+                    ? "bg-[#1a73e8] text-white"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-[#1a73e8]"
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Section heading */}
         <div className="mt-10 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="font-['DM_Sans'] text-sm font-semibold uppercase tracking-[0.14em] text-[#1a73e8]">
@@ -228,68 +290,164 @@ function HealthArticlesPage() {
           </div>
 
           <p className="font-['DM_Sans'] text-sm text-slate-500">
-            Information from trusted healthcare sources
+            {totalArticles > 0
+              ? `${totalArticles} articles available`
+              : "Information from trusted healthcare sources"}
           </p>
         </div>
 
-        {/* Featured article */}
-        <Link
-          to={`/health-articles/${articles[0].slug}`}
-          className="group mt-8 grid overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 lg:grid-cols-2"
-        >
-          <div className="aspect-[16/10] overflow-hidden bg-slate-100 lg:aspect-auto">
-            <img
-              src={articles[0].imageUrl}
-              alt={articles[0].title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-          </div>
-
-          <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#1a73e8]/10 px-3 py-1 font-['DM_Sans'] text-xs font-semibold text-[#1a73e8]">
-                Featured
-              </span>
-
-              <span className="font-['DM_Sans'] text-xs text-slate-400">
-                {articles[0].category}
-              </span>
-            </div>
-
-            <h2 className="mt-5 font-['Outfit'] text-3xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[#1a73e8] sm:text-4xl">
-              {articles[0].title}
-            </h2>
-
-            <p className="mt-4 font-['DM_Sans'] text-base leading-7 text-slate-600">
-              {articles[0].excerpt}
+        {loading ? (
+          <div className="flex min-h-80 items-center justify-center">
+            <p className="font-['DM_Sans'] text-sm text-slate-500">
+              Loading articles...
             </p>
-
-            <div className="mt-7 flex items-center gap-3 font-['DM_Sans'] text-sm text-slate-500">
-              <span>{articles[0].source}</span>
-              <span>•</span>
-              <span>{articles[0].publishedAt}</span>
-              <span>•</span>
-              <span>{articles[0].readTime}</span>
-            </div>
-
-            <span className="mt-7 inline-flex items-center gap-2 font-['DM_Sans'] text-sm font-semibold text-[#1a73e8]">
-              Read article
-              <span
-                aria-hidden="true"
-                className="transition-transform group-hover:translate-x-1"
-              >
-                →
-              </span>
-            </span>
           </div>
-        </Link>
+        ) : error ? (
+          <div className="mt-8 rounded-2xl border border-red-100 bg-red-50 px-6 py-10 text-center">
+            <p className="font-['DM_Sans'] text-sm text-red-600">{error}</p>
 
-        {/* Article grid */}
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {articles.slice(1).map((article) => (
-            <ArticleCard key={article.slug} article={article} />
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={() => setSearchParams(new URLSearchParams(searchParams))}
+              className="mt-4 font-['DM_Sans'] text-sm font-semibold text-[#1a73e8]"
+            >
+              Try again
+            </button>
+          </div>
+        ) : articles.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
+            <h3 className="font-['Outfit'] text-xl font-semibold text-slate-900">
+              No articles found
+            </h3>
+
+            <p className="mt-2 font-['DM_Sans'] text-sm text-slate-500">
+              Try a different search term or category.
+            </p>
+          </div>
+        ) : (
+          <>
+            <Link
+              to={`/health-articles/${featuredArticle.slug}`}
+              className="group mt-8 grid overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 lg:grid-cols-2"
+            >
+              <div className="aspect-video overflow-hidden bg-slate-100 lg:aspect-auto">
+                <img
+                  src={
+                    featuredArticle.imageUrl ||
+                    getDefaultArticleImage(featuredArticle.category)
+                  }
+                  alt={featuredArticle.title}
+                  onError={(event) => {
+                    const fallbackImage = getDefaultArticleImage(
+                      featuredArticle.category,
+                    );
+
+                    if (event.currentTarget.src !== fallbackImage) {
+                      event.currentTarget.src = fallbackImage;
+                    }
+                  }}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+              </div>
+
+              <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-[#1a73e8]/10 px-3 py-1 font-['DM_Sans'] text-xs font-semibold text-[#1a73e8]">
+                    Featured
+                  </span>
+
+                  <span className="font-['DM_Sans'] text-xs text-slate-400">
+                    {featuredArticle.category}
+                  </span>
+                </div>
+
+                <h2 className="mt-5 font-['Outfit'] text-3xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[#1a73e8] sm:text-4xl">
+                  {featuredArticle.title}
+                </h2>
+
+                <p className="mt-4 font-['DM_Sans'] text-base leading-7 text-slate-600">
+                  {featuredArticle.excerpt}
+                </p>
+
+                <div className="mt-7 flex items-center gap-3 font-['DM_Sans'] text-sm text-slate-500">
+                  <span>{featuredArticle.source}</span>
+
+                  <span>•</span>
+
+                  <span>
+                    {formatPublishedDate(featuredArticle.publishedAt)}
+                  </span>
+                </div>
+
+                <span className="mt-7 inline-flex items-center gap-2 font-['DM_Sans'] text-sm font-semibold text-[#1a73e8]">
+                  Read article
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </span>
+              </div>
+            </Link>
+
+            {remainingArticles.length > 0 && (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {remainingArticles.map((article) => (
+                  <ArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-12 flex flex-col items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePreviousPage}
+                    disabled={page === 1}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 font-['DM_Sans'] text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-[#1a73e8] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ← Previous
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1,
+                    ).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        type="button"
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`h-10 w-10 rounded-xl font-['DM_Sans'] text-sm font-semibold transition ${
+                          page === pageNumber
+                            ? "bg-[#1a73e8] text-white"
+                            : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-[#1a73e8]"
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleNextPage}
+                    disabled={page === totalPages}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 font-['DM_Sans'] text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-[#1a73e8] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next →
+                  </button>
+                </div>
+
+                <p className="font-['DM_Sans'] text-xs text-slate-400">
+                  Page {page} of {totalPages}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,11 +1,9 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { notFoundMiddleware } from "./middleware/not-found.middleware.js";
-
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import patientRouter from "./routes/patient.routes.js";
@@ -14,6 +12,7 @@ import userAddressRouter from "./routes/user-address.routes.js";
 import doctorRouter from "./routes/doctor.routes.js";
 import specializationRouter from "./routes/specialization.routes.js";
 import appointmentRouter from "./routes/appointment.routes.js";
+import articleRouter from "./routes/article.routes.js";
 
 const app = express();
 
@@ -25,6 +24,7 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use(cookieParser());
 
 app.get("/", (_req, res) => {
@@ -46,11 +46,14 @@ app.use("/api/v1/patients/me/emergency-contacts", emergencyContactRouter);
 app.use("/api/v1/doctors", doctorRouter);
 app.use("/api/v1/specializations", specializationRouter);
 app.use("/api/v1/appointments", appointmentRouter);
+app.use("/api/v1/articles", articleRouter);
 
 // Handle unmatched routes
+
 app.use(notFoundMiddleware);
 
 // Global error handler
+
 app.use(errorMiddleware);
 
 export default app;

@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getArticles } from "../services/article.service";
+import type { ArticlePreview } from "../types/article";
 
 const heroImage =
   "https://www.figma.com/api/mcp/asset/9b0fb92d-240e-40e2-a99e-1ffc93fe07d8.png";
@@ -184,7 +187,47 @@ const nearbyFacilities = [
   },
 ];
 
+const defaultArticleImages: Record<string, string> = {
+  "Heart Health":
+    "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1200&q=80",
+  Nutrition:
+    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
+  Fitness:
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
+  Wellness:
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
+  "Mental Health":
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
+  "Preventive Care":
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+  default:
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+};
+
+function getDefaultArticleImage(category: string) {
+  return defaultArticleImages[category] ?? defaultArticleImages.default;
+}
+
 function HomePage() {
+  const [articles, setArticles] = useState<ArticlePreview[]>([]);
+
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        const response = await getArticles({
+          page: 1,
+          limit: 3,
+        });
+
+        setArticles(response.data.slice(0, 3));
+      } catch {
+        setArticles([]);
+      }
+    }
+
+    loadArticles();
+  }, []);
+
   return (
     <div className="bg-[#f8fafc] text-[#0f172a]">
       {/* Hero */}
@@ -210,7 +253,6 @@ function HomePage() {
                 </p>
               </div>
 
-              {/* Search */}
               <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-[0_8px_12px_rgba(15,23,42,0.05)]">
                 <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
                   <img src={searchIcon} alt="" className="h-5 w-5 shrink-0" />
@@ -345,9 +387,7 @@ function HomePage() {
               className="flex overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white"
             >
               <div className="flex w-full flex-col">
-                {/* Card body */}
                 <div className="flex flex-col gap-4 p-5">
-                  {/* Doctor identity */}
                   <div className="flex items-center gap-4">
                     <img
                       src={doctor.avatar}
@@ -372,7 +412,6 @@ function HomePage() {
 
                   <div className="h-px w-full bg-[#e2e8f0]" />
 
-                  {/* Rating + Fee */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <img src={starIcon} alt="" className="h-4 w-4" />
@@ -391,7 +430,6 @@ function HomePage() {
                     </div>
                   </div>
 
-                  {/* Clinic */}
                   <div className="flex min-w-0 items-center gap-2">
                     <img
                       src={hospitalIcon}
@@ -405,7 +443,6 @@ function HomePage() {
                   </div>
                 </div>
 
-                {/* Card footer */}
                 <div className="mt-auto border-t border-[#e2e8f0] bg-[#f8fafc] p-4">
                   <Link
                     to="/doctors"
@@ -447,7 +484,6 @@ function HomePage() {
               key={facility.name}
               className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
             >
-              {/* Facility image placeholder */}
               <div className="flex h-40 items-center justify-center bg-[#f0f5fd]">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
                   🏥
@@ -558,73 +594,72 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              category: "Heart Health",
-              title: "Simple habits that can improve your heart health",
-              description:
-                "Learn practical lifestyle habits that can help support a healthier heart.",
-              readTime: "5 min read",
-              emoji: "❤️",
-            },
-            {
-              category: "Mental Wellness",
-              title: "Understanding stress and taking care of your mind",
-              description:
-                "Small everyday changes can make a meaningful difference to your mental wellbeing.",
-              readTime: "4 min read",
-              emoji: "🧠",
-            },
-            {
-              category: "Healthy Living",
-              title: "Everyday habits for a healthier lifestyle",
-              description:
-                "Explore simple ways to build healthier routines around food, sleep and activity.",
-              readTime: "6 min read",
-              emoji: "🌱",
-            },
-          ].map((article) => (
-            <article
-              key={article.title}
-              className="group overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
-            >
-              {/* Article image placeholder */}
-              <div className="flex h-40 items-center justify-center bg-[#eaf6ff]">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">
-                  {article.emoji}
+        {articles.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-3">
+            {articles.map((article) => {
+              const fallbackImage = getDefaultArticleImage(article.category);
+
+              return (
+                <Link
+                  key={article.id}
+                  to={`/health-articles/${article.slug}`}
+                  className="group overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
+                >
+                  <div className="aspect-video overflow-hidden bg-[#eaf6ff]">
+                    <img
+                      src={article.imageUrl || fallbackImage}
+                      alt={article.title}
+                      onError={(event) => {
+                        if (event.currentTarget.src !== fallbackImage) {
+                          event.currentTarget.src = fallbackImage;
+                        }
+                      }}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+
+                  <div className="p-5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
+                      {article.category}
+                    </span>
+
+                    <h3 className="mt-2 font-['Outfit'] text-lg font-semibold leading-6 text-[#0f172a] transition group-hover:text-[#1a73e8]">
+                      {article.title}
+                    </h3>
+
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#64748b]">
+                      {article.excerpt}
+                    </p>
+
+                    <div className="mt-5 flex items-center justify-end">
+                      <span className="text-sm font-semibold text-[#1a73e8]">
+                        Read Article →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white"
+              >
+                <div className="h-40 animate-pulse bg-[#eaf6ff]" />
+
+                <div className="space-y-3 p-5">
+                  <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+                  <div className="h-5 w-full animate-pulse rounded bg-slate-200" />
+                  <div className="h-5 w-4/5 animate-pulse rounded bg-slate-200" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
                 </div>
               </div>
-
-              <div className="p-5">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
-                  {article.category}
-                </span>
-
-                <h3 className="mt-2 font-['Outfit'] text-lg font-semibold leading-6 text-[#0f172a] transition group-hover:text-[#1a73e8]">
-                  {article.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-6 text-[#64748b]">
-                  {article.description}
-                </p>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="text-xs text-[#64748b]">
-                    {article.readTime}
-                  </span>
-
-                  <Link
-                    to="/health"
-                    className="text-sm font-semibold text-[#1a73e8]"
-                  >
-                    Read Article →
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

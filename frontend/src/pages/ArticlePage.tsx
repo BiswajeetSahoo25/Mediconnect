@@ -1,97 +1,89 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { getArticleBySlug, getArticles } from "../services/article.service";
+import type { ArticleDetail, ArticlePreview } from "../types/article";
 
-type Article = {
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  source: string;
-  readTime: string;
-  publishedAt: string;
-  imageUrl: string;
-};
+function formatPublishedDate(date: string) {
+  if (!date) return "";
 
-const articles: Article[] = [
-  {
-    slug: "building-a-healthier-daily-routine",
-    title: "Building a Healthier Daily Routine",
-    excerpt:
-      "Small, consistent habits can make a meaningful difference to your overall health and wellbeing.",
-    category: "Wellness",
-    source: "Medico",
-    readTime: "5 min read",
-    publishedAt: "Sep 7, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1600&q=85",
-  },
-  {
-    slug: "simple-ways-to-stay-active",
-    title: "Simple Ways to Stay Active Every Day",
-    excerpt:
-      "You don't always need a complicated workout plan. Discover simple ways to add more movement to your day.",
-    category: "Fitness",
-    source: "WHO",
-    readTime: "4 min read",
-    publishedAt: "Sep 5, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=85",
-  },
-  {
-    slug: "understanding-balanced-nutrition",
-    title: "Understanding the Basics of Balanced Nutrition",
-    excerpt:
-      "Learn how a balanced diet can support energy, wellbeing, and long-term health.",
-    category: "Nutrition",
-    source: "NHS",
-    readTime: "6 min read",
-    publishedAt: "Sep 3, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1600&q=85",
-  },
-  {
-    slug: "protecting-your-mental-wellbeing",
-    title: "Taking Care of Your Mental Wellbeing",
-    excerpt:
-      "Understanding your mental wellbeing is an important part of taking care of your overall health.",
-    category: "Mental Health",
-    source: "WHO",
-    readTime: "5 min read",
-    publishedAt: "Sep 1, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1600&q=85",
-  },
-  {
-    slug: "why-preventive-care-matters",
-    title: "Why Preventive Healthcare Matters",
-    excerpt:
-      "Regular health checks and preventive care can help you make informed decisions about your health.",
-    category: "Preventive Care",
-    source: "NHS",
-    readTime: "5 min read",
-    publishedAt: "Aug 30, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1600&q=85",
-  },
-  {
-    slug: "getting-better-sleep",
-    title: "Simple Habits for Better Sleep",
-    excerpt:
-      "A few changes to your daily routine can help create healthier sleep habits.",
-    category: "Wellness",
-    source: "Medico",
-    readTime: "4 min read",
-    publishedAt: "Aug 28, 2026",
-    imageUrl:
-      "https://images.unsplash.com/photo-1511295742362-92c96b1cf484?auto=format&fit=crop&w=1600&q=85",
-  },
-];
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(date));
+}
 
 function ArticlePage() {
   const { slug } = useParams();
 
-  const article = articles.find((item) => item.slug === slug);
+  const [article, setArticle] = useState<ArticleDetail | null>(null);
+  const [relatedArticles, setRelatedArticles] = useState<ArticlePreview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!article) {
+  useEffect(() => {
+    if (!slug) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    async function loadArticle(articleSlug: string) {
+      try {
+        setLoading(true);
+        setNotFound(false);
+        setError(null);
+
+        const response = await getArticleBySlug(articleSlug);
+        const currentArticle = response.data;
+
+        setArticle(currentArticle);
+
+        try {
+          const relatedResponse = await getArticles({
+            category: currentArticle.category,
+            page: 1,
+            limit: 4,
+          });
+
+          setRelatedArticles(
+            relatedResponse.data
+              .filter((item) => item.slug !== currentArticle.slug)
+              .slice(0, 3),
+          );
+        } catch {
+          setRelatedArticles([]);
+        }
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          "statusCode" in error &&
+          (error as { statusCode?: number }).statusCode === 404
+        ) {
+          setNotFound(true);
+        } else {
+          setError("Unable to load this article. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadArticle(slug);
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-[#f8fafc]">
+        <p className="font-['DM_Sans'] text-sm text-slate-500">
+          Loading article...
+        </p>
+      </div>
+    );
+  }
+
+  if (notFound || !article) {
     return (
       <div className="min-h-[60vh] bg-[#f8fafc] px-5 py-20">
         <div className="mx-auto max-w-3xl text-center">
@@ -119,16 +111,29 @@ function ArticlePage() {
     );
   }
 
-  const relatedArticles = articles
-    .filter(
-      (item) =>
-        item.slug !== article.slug && item.category === article.category,
-    )
-    .slice(0, 3);
+  if (error) {
+    return (
+      <div className="min-h-[60vh] bg-[#f8fafc] px-5 py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="font-['Outfit'] text-3xl font-bold text-slate-900">
+            Something went wrong
+          </h1>
+
+          <p className="mt-3 font-['DM_Sans'] text-slate-600">{error}</p>
+
+          <Link
+            to="/health-articles"
+            className="mt-7 inline-flex h-11 items-center rounded-xl bg-[#1a73e8] px-5 font-['DM_Sans'] text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            Back to Health Articles
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f8fafc] text-slate-900">
-      {/* Article header */}
       <section className="bg-white">
         <div className="mx-auto max-w-4xl px-5 pb-10 pt-12 lg:px-8 lg:pb-14 lg:pt-16">
           <Link
@@ -159,74 +164,34 @@ function ArticlePage() {
 
               <span aria-hidden="true">•</span>
 
-              <span>{article.publishedAt}</span>
-
-              <span aria-hidden="true">•</span>
-
-              <span>{article.readTime}</span>
+              <span>{formatPublishedDate(article.publishedAt)}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Cover image */}
       <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-5 pb-12 lg:px-8 lg:pb-16">
+        <div className="mx-auto max-w-5xl px-5 pb-12 lg:px-8 lg:pb-16">
           <div className="overflow-hidden rounded-3xl bg-slate-100">
-            <img
-              src={article.imageUrl}
-              alt={article.title}
-              className="aspect-[16/8] w-full object-cover"
-            />
+            {article.imageUrl ? (
+              <img
+                src={article.imageUrl}
+                alt={article.title}
+                className="aspect-2/1 w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-2/1 items-center justify-center font-['DM_Sans'] text-sm text-slate-400">
+                No image available
+              </div>
+            )}
           </div>
         </div>
       </section>
+      
 
-      {/* Article content */}
       <main className="mx-auto max-w-4xl px-5 py-12 lg:px-8 lg:py-16">
         <article className="font-['DM_Sans'] text-base leading-8 text-slate-700">
-          <p>
-            Taking care of your health doesn't always require making dramatic
-            changes to your lifestyle. In many cases, small habits practiced
-            consistently can become an important part of a healthier daily
-            routine.
-          </p>
-
-          <h2 className="mt-12 font-['Outfit'] text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
-            Start with small, realistic changes
-          </h2>
-
-          <p className="mt-5">
-            A sustainable routine is one that fits naturally into your everyday
-            life. Instead of trying to change everything at once, focus on one
-            or two habits that you can maintain consistently.
-          </p>
-
-          <p className="mt-5">
-            This could mean adding more movement throughout the day, choosing
-            balanced meals more often, maintaining a regular sleep schedule, or
-            simply making time to relax and recharge.
-          </p>
-
-          <h2 className="mt-12 font-['Outfit'] text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
-            Make movement part of your day
-          </h2>
-
-          <p className="mt-5">
-            Physical activity doesn't have to mean spending hours at the gym.
-            Walking, taking the stairs, stretching, cycling, or participating in
-            an activity you enjoy can all help you stay active.
-          </p>
-
-          <h2 className="mt-12 font-['Outfit'] text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
-            Don't overlook rest
-          </h2>
-
-          <p className="mt-5">
-            Rest and recovery are also important parts of a healthy lifestyle.
-            Creating a consistent sleep routine and giving yourself time to
-            recover can support both physical and mental wellbeing.
-          </p>
+          <div className="whitespace-pre-line">{article.content}</div>
 
           <div className="mt-12 rounded-2xl border border-blue-100 bg-blue-50 p-6">
             <h3 className="font-['Outfit'] text-lg font-bold text-slate-900">
@@ -234,39 +199,28 @@ function ArticlePage() {
             </h3>
 
             <p className="mt-2 font-['DM_Sans'] text-sm leading-6 text-slate-600">
-              Healthy habits don't have to be perfect. Focus on changes that are
-              realistic for you and build consistency over time.
+              Health information is intended for general educational purposes.
+              For personal medical concerns, consult a qualified healthcare
+              professional.
             </p>
           </div>
 
-          {/* Source */}
           <div className="mt-12 border-t border-slate-200 pt-8">
             <p className="font-['DM_Sans'] text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
               Article source
             </p>
 
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-['DM_Sans'] text-sm font-semibold text-slate-800">
-                  {article.source}
-                </p>
+            <div className="mt-3">
+              <p className="font-['DM_Sans'] text-sm font-semibold text-slate-800">
+                {article.source}
+              </p>
 
-                <p className="mt-1 font-['DM_Sans'] text-sm text-slate-500">
-                  This article is provided for general health information.
-                </p>
-              </div>
-
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 font-['DM_Sans'] text-sm font-semibold text-[#1a73e8] transition hover:text-blue-700"
-              >
-                Read original source
-                <span aria-hidden="true">↗</span>
-              </a>
+              <p className="mt-1 font-['DM_Sans'] text-sm text-slate-500">
+                This article is provided for general health information.
+              </p>
             </div>
           </div>
 
-          {/* Disclaimer */}
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-['DM_Sans'] text-xs leading-5 text-slate-500">
               <span className="font-semibold text-slate-700">
@@ -280,7 +234,6 @@ function ArticlePage() {
         </article>
       </main>
 
-      {/* Related articles */}
       {relatedArticles.length > 0 && (
         <section className="border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-20">
@@ -297,16 +250,22 @@ function ArticlePage() {
             <div className="mt-8 grid gap-6 md:grid-cols-3">
               {relatedArticles.map((related) => (
                 <Link
-                  key={related.slug}
+                  key={related.id}
                   to={`/health-articles/${related.slug}`}
                   className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
                 >
-                  <div className="aspect-[16/9] overflow-hidden bg-slate-100">
-                    <img
-                      src={related.imageUrl}
-                      alt={related.title}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
+                  <div className="aspect-video overflow-hidden bg-slate-100">
+                    {related.imageUrl ? (
+                      <img
+                        src={related.imageUrl}
+                        alt={related.title}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center font-['DM_Sans'] text-xs text-slate-400">
+                        No image available
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-5">
@@ -318,8 +277,13 @@ function ArticlePage() {
                       {related.title}
                     </h3>
 
-                    <p className="mt-2 font-['DM_Sans'] text-xs text-slate-500">
-                      {related.source} · {related.readTime}
+                    <p className="mt-2 line-clamp-2 font-['DM_Sans'] text-xs leading-5 text-slate-500">
+                      {related.excerpt}
+                    </p>
+
+                    <p className="mt-3 font-['DM_Sans'] text-xs text-slate-500">
+                      {related.source} ·{" "}
+                      {formatPublishedDate(related.publishedAt)}
                     </p>
                   </div>
                 </Link>
