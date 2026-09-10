@@ -25,6 +25,7 @@ import HealthcareDetailsPage from "./pages/HealthcareDetailsPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import DoctorProfilePage from "./pages/DoctorProfilePage";
+import FAQPage from "./pages/FAQPage";
 
 import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
@@ -46,6 +47,7 @@ function App() {
                 path="/healthcare/:placeId"
                 element={<HealthcareDetailsPage />}
               />
+              <Route path="/faq" element={<FAQPage />} />
             </Route>
 
             {/* Authentication */}
@@ -74,7 +76,7 @@ function App() {
                   <Route path="/account" element={<AccountSettingsPage />} />
                   <Route path="/doctors" element={<DoctorsPage />} />
                   <Route path="/doctors/:id" element={<DoctorProfilePage />} />
-                  
+
                   <Route
                     path="/appointments"
                     element={

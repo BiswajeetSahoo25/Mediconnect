@@ -34,7 +34,7 @@ const aboutLinks = [
 ];
 
 const legalLinks = [
-  { label: "FAQs", to: "#" },
+  { label: "FAQs", to: "/faq" },
   { label: "Privacy Policy", to: "#" },
   { label: "Terms of Service", to: "#" },
   { label: "IP Policy", to: "#" },
