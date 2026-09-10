@@ -29,6 +29,8 @@ import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
+import MedicinesPage from "./pages/MedicinesPage";
+import MedicineDetailsPage from "./pages/MedicineDetailsPage";
 
 import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
@@ -54,6 +56,11 @@ function App() {
               />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/medicines" element={<MedicinesPage />} />
+              <Route
+                path="/medicines/:id"
+                element={<MedicineDetailsPage />}
+              />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
             </Route>

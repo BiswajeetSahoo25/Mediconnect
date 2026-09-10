@@ -13,7 +13,7 @@ const patientLinks = [
   { label: "Search Doctors", to: "/doctors" },
   { label: "Book Appointments", to: "/appointments" },
   { label: "Online Consultations", to: "/doctors" },
-  { label: "Medicines", to: "#" },
+  { label: "Medicines", to: "/medicines" },
   { label: "Health Articles", to: "/health-articles" },
 ];
 
