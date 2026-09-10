@@ -158,7 +158,6 @@ function DoctorsPage() {
 
   function toggleSelection(
     value: string,
-    selected: string[],
     setSelected: Dispatch<SetStateAction<string[]>>,
   ) {
     setSelected((current) =>
@@ -167,7 +166,6 @@ function DoctorsPage() {
         : [...current, value],
     );
   }
-
   function clearFilters() {
     setSelectedSpecialties([]);
     setSelectedExperiences([]);
@@ -328,11 +326,7 @@ function DoctorsPage() {
                     <Checkbox
                       checked={selectedSpecialties.includes(specialty)}
                       onClick={() =>
-                        toggleSelection(
-                          specialty,
-                          selectedSpecialties,
-                          setSelectedSpecialties,
-                        )
+                        toggleSelection(specialty, setSelectedSpecialties)
                       }
                     />
 
@@ -360,11 +354,7 @@ function DoctorsPage() {
                     <Checkbox
                       checked={selectedExperiences.includes(experience)}
                       onClick={() =>
-                        toggleSelection(
-                          experience,
-                          selectedExperiences,
-                          setSelectedExperiences,
-                        )
+                        toggleSelection(experience, setSelectedExperiences)
                       }
                     />
 
@@ -416,11 +406,7 @@ function DoctorsPage() {
                     <Checkbox
                       checked={selectedGenders.includes(gender)}
                       onClick={() =>
-                        toggleSelection(
-                          gender,
-                          selectedGenders,
-                          setSelectedGenders,
-                        )
+                        toggleSelection(gender, setSelectedGenders)
                       }
                     />
 

@@ -57,7 +57,7 @@ const emptyEmergencyContact = {
 };
 
 function AccountSettingsPage() {
-  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [, setUser] = useState<CurrentUser | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +81,6 @@ function AccountSettingsPage() {
     reset,
     control,
     getValues,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AccountSettingsForm>({
     resolver: zodResolver(accountSettingsSchema),
