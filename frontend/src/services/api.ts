@@ -1,5 +1,4 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
-
 import type { SignupFormData } from "../validators/signup.validator";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -21,6 +20,7 @@ type ApiErrorResponse = {
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
+
 let refreshPromise: Promise<unknown> | null = null;
 
 api.interceptors.response.use(
@@ -52,7 +52,6 @@ api.interceptors.response.use(
       return api.request(originalRequest);
     } catch {
       window.dispatchEvent(new Event("auth:failed"));
-
       throw error;
     }
   },
@@ -133,6 +132,62 @@ export async function getCurrentUser() {
 export async function logoutUser() {
   try {
     const response = await api.post("/auth/logout");
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function updateCurrentUser(data: {
+  email?: string;
+  phone?: string | null;
+}) {
+  try {
+    const response = await api.patch("/users/me", data);
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function updatePatient(data: {
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+}) {
+  try {
+    const response = await api.patch("/patients/me", data);
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function completeOnboarding() {
+  try {
+    const response = await api.post("/users/me/onboarding/complete");
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function createDoctorApplication(data: {
+  firstName: string;
+  lastName: string;
+  licenseNumber: string;
+  licenseAuthority?: string;
+  yearsOfExperience?: number;
+  about?: string;
+}) {
+  try {
+    const response = await api.post("/doctor-applications", data);
 
     return response.data;
   } catch (error) {

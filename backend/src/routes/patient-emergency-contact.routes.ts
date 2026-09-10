@@ -14,15 +14,12 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-const emergencyContactController =
-  new PatientEmergencyContactController();
+const emergencyContactController = new PatientEmergencyContactController();
 
 router.get(
   "/",
   requireAuth,
-  emergencyContactController.getContacts.bind(
-    emergencyContactController,
-  ),
+  emergencyContactController.getContacts.bind(emergencyContactController),
 );
 
 router.post(
@@ -31,9 +28,7 @@ router.post(
   validate({
     body: createEmergencyContactSchema,
   }),
-  emergencyContactController.createContact.bind(
-    emergencyContactController,
-  ),
+  emergencyContactController.createContact.bind(emergencyContactController),
 );
 
 router.patch(
@@ -43,9 +38,7 @@ router.patch(
     params: emergencyContactIdSchema,
     body: updateEmergencyContactSchema,
   }),
-  emergencyContactController.updateContact.bind(
-    emergencyContactController,
-  ),
+  emergencyContactController.updateContact.bind(emergencyContactController),
 );
 
 router.delete(
@@ -54,9 +47,7 @@ router.delete(
   validate({
     params: emergencyContactIdSchema,
   }),
-  emergencyContactController.deleteContact.bind(
-    emergencyContactController,
-  ),
+  emergencyContactController.deleteContact.bind(emergencyContactController),
 );
 
 export default router;

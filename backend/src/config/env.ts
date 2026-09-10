@@ -22,4 +22,6 @@ export const env = {
   refreshTokenExpiresInDays: Number(
     getRequiredEnv("REFRESH_TOKEN_EXPIRES_IN_DAYS"),
   ),
+
+  geoapifyApiKey: getRequiredEnv("GEOAPIFY_API_KEY"),
 };

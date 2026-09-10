@@ -1,15 +1,18 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   signupSchema,
   type SignupFormData,
 } from "../validators/signup.validator";
 import { ApiError, createUser } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 function SignupPage() {
+  const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const {
     register,
     handleSubmit,
@@ -17,7 +20,7 @@ function SignupPage() {
     formState: { errors, isSubmitting },
   } = useForm<
     z.input<typeof signupSchema>,
-    any,
+    undefined,
     z.output<typeof signupSchema>
   >({
     resolver: zodResolver(signupSchema),
@@ -25,9 +28,9 @@ function SignupPage() {
 
   async function onSubmit(data: SignupFormData) {
     try {
-      const result = await createUser(data);
-
-      console.log("Signup successful:", result);
+      await createUser(data);
+      await refreshUser();
+      navigate("/onboarding", { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         const fields = error.details?.fields ?? [];
@@ -45,10 +48,18 @@ function SignupPage() {
           }
         }
 
+        setError("root", {
+          type: "server",
+          message: error.message,
+        });
+
         return;
       }
 
-      console.error(error);
+      setError("root", {
+        type: "server",
+        message: "We could not create your account. Please try again.",
+      });
     }
   }
 

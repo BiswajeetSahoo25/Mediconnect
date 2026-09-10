@@ -8,6 +8,9 @@ CREATE TYPE "AppointmentStatus" AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED', 
 CREATE TYPE "AppointmentType" AS ENUM ('CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE', 'SPECIALIZED');
 
 -- CreateEnum
+CREATE TYPE "AppointmentModel" AS ENUM ('IN_PERSON', 'VIDEO_CALL', 'PHONE_CALL');
+
+-- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED', 'PARTIAL_REFUND');
 
 -- CreateEnum
@@ -26,9 +29,9 @@ CREATE TYPE "DocumentType" AS ENUM ('LAB_REPORT', 'IMAGING', 'PRESCRIPTION', 'DI
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "phone" VARCHAR(20) NOT NULL,
+    "phone" VARCHAR(20),
     "password_hash" VARCHAR(255) NOT NULL,
-    "role" "UserRole" NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'PATIENT',
     "is_verified" BOOLEAN NOT NULL DEFAULT false,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "last_login_at" TIMESTAMP(3),
@@ -36,16 +39,54 @@ CREATE TABLE "users" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "updated_by" UUID,
     "deleted_at" TIMESTAMP(3),
+    "onboarding_completed_at" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "media" (
+    "id" UUID NOT NULL,
+    "file_name" VARCHAR(255) NOT NULL,
+    "file_url" VARCHAR(1000) NOT NULL,
+    "file_size" INTEGER,
+    "mime_type" TEXT,
+    "media_type" VARCHAR(50) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "media_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_media" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "media_id" UUID NOT NULL,
+    "media_type" VARCHAR(50) NOT NULL,
+    "is_primary" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_media_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "refresh_tokens" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "token_hash" VARCHAR(235) NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "revoked_at" TIMESTAMP(3),
+
+    CONSTRAINT "refresh_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "patients" (
     "id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
-    "first_name" VARCHAR(100) NOT NULL,
-    "last_name" VARCHAR(100) NOT NULL,
+    "first_name" VARCHAR(100),
+    "last_name" VARCHAR(100),
     "date_of_birth" DATE,
     "gender" VARCHAR(30),
     "blood_group" VARCHAR(10),
@@ -61,9 +102,9 @@ CREATE TABLE "patients" (
 CREATE TABLE "patient_emergency_contacts" (
     "id" UUID NOT NULL,
     "patient_id" UUID NOT NULL,
-    "contact_name" VARCHAR(150) NOT NULL,
-    "contact_phone" VARCHAR(20) NOT NULL,
-    "contact_relationship" VARCHAR(50) NOT NULL,
+    "contact_name" VARCHAR(150),
+    "contact_phone" VARCHAR(20),
+    "contact_relationship" VARCHAR(50),
     "is_primary" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -76,7 +117,7 @@ CREATE TABLE "doctors" (
     "id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
     "first_name" VARCHAR(100) NOT NULL,
-    "last_name" VARCHAR(100) NOT NULL,
+    "last_name" VARCHAR(100),
     "license_number" VARCHAR(100) NOT NULL,
     "license_authority" VARCHAR(150),
     "license_verification_status" "LicenseStatus" NOT NULL DEFAULT 'PENDING',
@@ -86,7 +127,6 @@ CREATE TABLE "doctors" (
     "verification_notes" TEXT,
     "years_of_experience" INTEGER,
     "about" TEXT,
-    "profile_image" VARCHAR(500),
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -122,7 +162,8 @@ CREATE TABLE "doctor_specializations" (
 -- CreateTable
 CREATE TABLE "doctor_leave" (
     "id" UUID NOT NULL,
-    "doctor_facility_id" UUID NOT NULL,
+    "doctor_id" UUID NOT NULL,
+    "doctor_facility_id" UUID,
     "leave_type" VARCHAR(50) NOT NULL,
     "start_date" DATE NOT NULL,
     "end_date" DATE NOT NULL,
@@ -130,7 +171,6 @@ CREATE TABLE "doctor_leave" (
     "is_approved" BOOLEAN NOT NULL DEFAULT false,
     "approved_by" UUID,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "doctor_id" UUID NOT NULL,
 
     CONSTRAINT "doctor_leave_pkey" PRIMARY KEY ("id")
 );
@@ -199,6 +239,19 @@ CREATE TABLE "facility_addresses" (
 );
 
 -- CreateTable
+CREATE TABLE "facility_media" (
+    "id" UUID NOT NULL,
+    "facility_id" UUID NOT NULL,
+    "media_id" UUID NOT NULL,
+    "media_type" VARCHAR(50) NOT NULL,
+    "is_primary" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "facilityAddressId" UUID,
+
+    CONSTRAINT "facility_media_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "departments" (
     "id" UUID NOT NULL,
     "facility_id" UUID NOT NULL,
@@ -219,6 +272,8 @@ CREATE TABLE "doctor_facilities" (
     "department_id" UUID NOT NULL,
     "consultation_fee" DECIMAL(12,2) NOT NULL,
     "consultation_mode" VARCHAR(50) NOT NULL,
+    "online_booking_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "online_booking_limit" INTEGER,
     "joining_date" DATE NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -235,7 +290,6 @@ CREATE TABLE "doctor_availability" (
     "day_of_week" INTEGER NOT NULL,
     "start_time" TIME NOT NULL,
     "end_time" TIME NOT NULL,
-    "slot_duration_minutes" INTEGER NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -248,9 +302,9 @@ CREATE TABLE "appointments" (
     "patient_id" UUID NOT NULL,
     "doctor_facility_id" UUID NOT NULL,
     "appointment_type" "AppointmentType" NOT NULL,
+    "appointment_model" "AppointmentModel" NOT NULL,
     "appointment_date" DATE NOT NULL,
-    "start_time" TIME NOT NULL,
-    "end_time" TIME NOT NULL,
+    "queue_number" INTEGER NOT NULL,
     "status" "AppointmentStatus" NOT NULL DEFAULT 'SCHEDULED',
     "reason" TEXT,
     "patient_notes" TEXT,
@@ -279,6 +333,18 @@ CREATE TABLE "appointment_waitlist" (
     "converted_to_appointment_id" UUID,
 
     CONSTRAINT "appointment_waitlist_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "appointment_daily_counters" (
+    "id" UUID NOT NULL,
+    "doctor_facility_id" UUID NOT NULL,
+    "appointment_date" DATE NOT NULL,
+    "last_queue_number" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "appointment_daily_counters_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -593,6 +659,24 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
 -- CreateIndex
+CREATE INDEX "media_media_type_idx" ON "media"("media_type");
+
+-- CreateIndex
+CREATE INDEX "user_media_user_id_media_type_idx" ON "user_media"("user_id", "media_type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_media_user_id_media_id_key" ON "user_media"("user_id", "media_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "refresh_tokens_token_hash_key" ON "refresh_tokens"("token_hash");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_userId_idx" ON "refresh_tokens"("userId");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_expires_at_idx" ON "refresh_tokens"("expires_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "patients_user_id_key" ON "patients"("user_id");
 
 -- CreateIndex
@@ -653,6 +737,15 @@ CREATE INDEX "facility_addresses_address_id_idx" ON "facility_addresses"("addres
 CREATE UNIQUE INDEX "facility_addresses_facility_id_address_id_address_type_key" ON "facility_addresses"("facility_id", "address_id", "address_type");
 
 -- CreateIndex
+CREATE INDEX "facility_media_facility_id_media_type_idx" ON "facility_media"("facility_id", "media_type");
+
+-- CreateIndex
+CREATE INDEX "facility_media_media_id_idx" ON "facility_media"("media_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "facility_media_facility_id_media_id_key" ON "facility_media"("facility_id", "media_id");
+
+-- CreateIndex
 CREATE INDEX "departments_facility_id_idx" ON "departments"("facility_id");
 
 -- CreateIndex
@@ -680,6 +773,9 @@ CREATE INDEX "doctor_availability_doctor_facility_id_idx" ON "doctor_availabilit
 CREATE INDEX "doctor_availability_doctor_facility_id_day_of_week_idx" ON "doctor_availability"("doctor_facility_id", "day_of_week");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "doctor_availability_doctor_facility_id_day_of_week_start_ti_key" ON "doctor_availability"("doctor_facility_id", "day_of_week", "start_time", "end_time");
+
+-- CreateIndex
 CREATE INDEX "appointments_patient_id_idx" ON "appointments"("patient_id");
 
 -- CreateIndex
@@ -692,7 +788,10 @@ CREATE INDEX "appointments_appointment_date_idx" ON "appointments"("appointment_
 CREATE INDEX "appointments_status_idx" ON "appointments"("status");
 
 -- CreateIndex
-CREATE INDEX "appointments_doctor_facility_id_appointment_date_start_time_idx" ON "appointments"("doctor_facility_id", "appointment_date", "start_time");
+CREATE INDEX "appointments_doctor_facility_id_appointment_date_status_idx" ON "appointments"("doctor_facility_id", "appointment_date", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "appointments_doctor_facility_id_appointment_date_queue_numb_key" ON "appointments"("doctor_facility_id", "appointment_date", "queue_number");
 
 -- CreateIndex
 CREATE INDEX "appointment_waitlist_patient_id_idx" ON "appointment_waitlist"("patient_id");
@@ -711,6 +810,9 @@ CREATE INDEX "appointment_waitlist_priority_idx" ON "appointment_waitlist"("prio
 
 -- CreateIndex
 CREATE INDEX "appointment_waitlist_converted_to_appointment_id_idx" ON "appointment_waitlist"("converted_to_appointment_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "appointment_daily_counters_doctor_facility_id_appointment_d_key" ON "appointment_daily_counters"("doctor_facility_id", "appointment_date");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "medical_records_appointment_id_key" ON "medical_records"("appointment_id");
@@ -914,6 +1016,15 @@ CREATE INDEX "data_access_logs_patient_id_accessed_at_idx" ON "data_access_logs"
 ALTER TABLE "users" ADD CONSTRAINT "users_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "user_media" ADD CONSTRAINT "user_media_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_media" ADD CONSTRAINT "user_media_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "patients" ADD CONSTRAINT "patients_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -938,7 +1049,7 @@ ALTER TABLE "doctor_specializations" ADD CONSTRAINT "doctor_specializations_doct
 ALTER TABLE "doctor_specializations" ADD CONSTRAINT "doctor_specializations_specialization_id_fkey" FOREIGN KEY ("specialization_id") REFERENCES "specializations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "doctor_leave" ADD CONSTRAINT "doctor_leave_doctor_facility_id_fkey" FOREIGN KEY ("doctor_facility_id") REFERENCES "doctor_facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "doctor_leave" ADD CONSTRAINT "doctor_leave_doctor_facility_id_fkey" FOREIGN KEY ("doctor_facility_id") REFERENCES "doctor_facilities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "doctor_leave" ADD CONSTRAINT "doctor_leave_doctor_id_fkey" FOREIGN KEY ("doctor_id") REFERENCES "doctors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -963,6 +1074,15 @@ ALTER TABLE "facility_addresses" ADD CONSTRAINT "facility_addresses_facility_id_
 
 -- AddForeignKey
 ALTER TABLE "facility_addresses" ADD CONSTRAINT "facility_addresses_address_id_fkey" FOREIGN KEY ("address_id") REFERENCES "addresses"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "facility_media" ADD CONSTRAINT "facility_media_facility_id_fkey" FOREIGN KEY ("facility_id") REFERENCES "healthcare_facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "facility_media" ADD CONSTRAINT "facility_media_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "facility_media" ADD CONSTRAINT "facility_media_facilityAddressId_fkey" FOREIGN KEY ("facilityAddressId") REFERENCES "facility_addresses"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "departments" ADD CONSTRAINT "departments_facility_id_fkey" FOREIGN KEY ("facility_id") REFERENCES "healthcare_facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1014,6 +1134,9 @@ ALTER TABLE "appointment_waitlist" ADD CONSTRAINT "appointment_waitlist_facility
 
 -- AddForeignKey
 ALTER TABLE "appointment_waitlist" ADD CONSTRAINT "appointment_waitlist_converted_to_appointment_id_fkey" FOREIGN KEY ("converted_to_appointment_id") REFERENCES "appointments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointment_daily_counters" ADD CONSTRAINT "appointment_daily_counters_doctor_facility_id_fkey" FOREIGN KEY ("doctor_facility_id") REFERENCES "doctor_facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "medical_records" ADD CONSTRAINT "medical_records_appointment_id_fkey" FOREIGN KEY ("appointment_id") REFERENCES "appointments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

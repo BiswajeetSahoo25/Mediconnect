@@ -1,6 +1,6 @@
 import argon2 from "argon2";
 import { UserRepository } from "../repositories/user.repository.js";
-import { CreateUserInput } from "../validators/user.validator.js";
+import { CreateUserInput, UpdateCurrentUserInput } from "../validators/user.validator.js";
 
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -24,5 +24,16 @@ export class UserService {
         phone: data.phone,
       }),
     });
+  }
+
+  async updateCurrentUser(id: string, data: UpdateCurrentUserInput) {
+    return this.userRepository.update(id, {
+      ...(data.email !== undefined ? { email: data.email } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+    });
+  }
+
+  async completeOnboarding(id: string) {
+    return this.userRepository.update(id, { onboardingCompletedAt: new Date() });
   }
 }

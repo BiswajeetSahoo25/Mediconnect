@@ -33,4 +33,12 @@ export class UserRepository {
       },
     });
   }
+
+  async update(id: string, data: Prisma.UserUpdateInput) {
+    try {
+      return await prisma.user.update({ where: { id }, data });
+    } catch (error) {
+      throw mapPrismaError(error);
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import type { User } from "../generated/prisma/client.js";
 
 import { env } from "../config/env.js";
 import { UnauthorizedError } from "../errors/http-errors.js";
@@ -10,6 +11,7 @@ import {
   hashRefreshToken,
 } from "../auth/utils/refresh-token.js";
 import { toUserResponse } from "../mappers/user.mapper.js";
+import type { CreateUserInput } from "../validators/user.validator.js";
 
 export class AuthService {
   private readonly userRepository: UserRepository;
@@ -18,6 +20,17 @@ export class AuthService {
   constructor() {
     this.userRepository = new UserRepository();
     this.refreshTokenRepository = new RefreshTokenRepository();
+  }
+
+  async signup(data: CreateUserInput) {
+    const passwordHash = await argon2.hash(data.password);
+    const user = await this.userRepository.create({
+      email: data.email,
+      passwordHash,
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+    });
+
+    return this.createSession(user);
   }
 
   async login(email: string, password: string) {
@@ -33,6 +46,10 @@ export class AuthService {
       throw new UnauthorizedError();
     }
 
+    return this.createSession(user);
+  }
+
+  private async createSession(user: User) {
     await this.userRepository.updateLastLogin(user.id);
 
     const accessToken = await generateAccessToken(user.id, user.role);
