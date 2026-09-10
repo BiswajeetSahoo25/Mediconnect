@@ -13,7 +13,6 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import OnboardingPage from "./pages/OnboardingPage";
-import AccountPage from "./pages/AccountPage";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage";
 import DoctorApplicationPage from "./pages/DoctorApplicationPage";
 import FeaturePage from "./pages/FeaturePage";
@@ -23,6 +22,9 @@ import NotFoundPage from "./pages/NotFoundPage";
 import AboutPage from "./pages/AboutPage";
 import HealthcarePage from "./pages/HealthcarePage";
 import HealthcareDetailsPage from "./pages/HealthcareDetailsPage";
+import AccountSettingsPage from "./pages/AccountSettingsPage";
+import DoctorsPage from "./pages/DoctorsPage";
+import DoctorProfilePage from "./pages/DoctorProfilePage";
 
 import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
@@ -61,34 +63,18 @@ function App() {
               <Route element={<OnboardingRequiredRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
-
                   <Route
                     path="/doctor-dashboard"
                     element={<DoctorDashboardPage />}
                   />
-
                   <Route
                     path="/apply-as-doctor"
                     element={<DoctorApplicationPage />}
                   />
-
-                  <Route path="/account" element={<AccountPage />} />
-
-                  <Route
-                    path="/doctors"
-                    element={
-                      <FeaturePage
-                        eyebrow="Care directory"
-                        title="Find a doctor"
-                        description="Browse approved clinicians, compare available services and book an appointment."
-                        action={{
-                          label: "View my appointments",
-                          to: "/appointments",
-                        }}
-                      />
-                    }
-                  />
-
+                  <Route path="/account" element={<AccountSettingsPage />} />
+                  <Route path="/doctors" element={<DoctorsPage />} />
+                  <Route path="/doctors/:id" element={<DoctorProfilePage />} />
+                  
                   <Route
                     path="/appointments"
                     element={
@@ -103,7 +89,6 @@ function App() {
                       />
                     }
                   />
-
                   <Route
                     path="/records"
                     element={
