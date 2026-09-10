@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { env } from "../config/env.js";
 import { AuthService } from "../services/auth.service.js";
 import { UnauthorizedError } from "../errors/http-errors.js";
 import type { CreateUserInput } from "../validators/user.validator.js";
@@ -11,23 +12,36 @@ export class AuthController {
     this.authService = new AuthService();
   }
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-    res.cookie("accessToken", accessToken, {
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    const isProduction = env.nodeEnv === "production";
+
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    };
+
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
   }
 
   async signup(req: Request, res: Response) {
-    const result = await this.authService.signup(req.validated.body as CreateUserInput);
+    const result = await this.authService.signup(
+      req.validated.body as CreateUserInput,
+    );
+
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    return res.status(201).json({ success: true, data: { user: result.user } });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        user: result.user,
+      },
+    });
   }
 
   async login(req: Request, res: Response) {
@@ -71,17 +85,16 @@ export class AuthController {
       await this.authService.logout(refreshToken);
     }
 
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    const isProduction = env.nodeEnv === "production";
 
-    res.clearCookie("refreshToken", {
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
 
     return res.status(200).json({
       success: true,
