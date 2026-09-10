@@ -44,3 +44,16 @@ export class ForbiddenError extends AppError {
     super(message, 403);
   }
 }
+export class ServiceError extends AppError {
+  constructor(
+    message = "Service unavailable",
+    statusCode = 503,
+    cause: Error | null = null,
+  ) {
+    super(message, statusCode, true);
+    this.name = "ServiceError";
+    if (cause) {
+      this.stack = cause.stack;
+    }
+  }
+}

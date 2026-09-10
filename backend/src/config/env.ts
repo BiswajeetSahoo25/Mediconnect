@@ -24,4 +24,5 @@ export const env = {
   ),
 
   geoapifyApiKey: getRequiredEnv("GEOAPIFY_API_KEY"),
+  openfdaApiKey: process.env.OPENFDA_API_KEY ?? "",
 };
