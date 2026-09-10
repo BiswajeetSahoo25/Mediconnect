@@ -30,13 +30,13 @@ const aboutLinks = [
   { label: "Careers", to: "#" },
   { label: "Press Releases", to: "#" },
   { label: "Sitemap", to: "#" },
-  { label: "Contact Us", to: "#" },
+  { label: "Contact Us", to: "/contact" },
 ];
 
 const legalLinks = [
   { label: "FAQs", to: "/faq" },
-  { label: "Privacy Policy", to: "#" },
-  { label: "Terms of Service", to: "#" },
+  { label: "Privacy Policy", to: "/privacy" },
+  { label: "Terms of Service", to: "/terms" },
   { label: "IP Policy", to: "#" },
   { label: "Grievance Redressal", to: "#" },
 ];

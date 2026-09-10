@@ -26,15 +26,20 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import DoctorProfilePage from "./pages/DoctorProfilePage";
 import FAQPage from "./pages/FAQPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
 
 import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <LocationProvider>
+          <ScrollToTop />
           <Routes>
             {/* Public website */}
             <Route element={<PublicLayout />}>
@@ -48,6 +53,9 @@ function App() {
                 element={<HealthcareDetailsPage />}
               />
               <Route path="/faq" element={<FAQPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsOfServicePage />} />
             </Route>
 
             {/* Authentication */}
