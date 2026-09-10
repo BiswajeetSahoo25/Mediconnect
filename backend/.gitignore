@@ -5,5 +5,3 @@ node_modules
 !.env.example
 
 /src/generated/prisma
-prisma/seed/
-prisma/seed/dev/
