@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getArticles } from "../services/article.service";
 import type { ArticlePreview } from "../types/article";
+import { search } from "../assets/icons";
 
 const heroImage =
-  "https://www.figma.com/api/mcp/asset/9b0fb92d-240e-40e2-a99e-1ffc93fe07d8.png";
+  "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 const healthcareImage =
-  "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=85";
+  "https://plus.unsplash.com/premium_photo-1698421947098-d68176a8f5b2?q=80&w=752&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?auto=format&fit=crop&w=1200&q=85";
 
-const searchIcon =
-  "https://www.figma.com/api/mcp/asset/1bd7da44-fd25-4754-97c3-11f13b956965.svg";
+const searchIcon = search;
 
 const ambulanceIcon =
   "https://www.figma.com/api/mcp/asset/d1c2277f-14b4-4a61-9cac-01f3d57c8971.svg";
@@ -231,7 +231,7 @@ function HomePage() {
 
               <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-[0_8px_12px_rgba(15,23,42,0.05)]">
                 <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
-                  <img src={searchIcon} alt="" className="h-5 w-5 shrink-0" />
+                  <img src={searchIcon} alt="" className="h-6 w-6 shrink-0" />
 
                   <input
                     type="text"
@@ -462,10 +462,53 @@ function HomePage() {
               </div>
             </div>
 
-            <div className="min-h-[280px] lg:min-h-full">
+            <div className="max-h-[280px] lg:min-h-full">
               <img
                 src={healthcareImage}
                 alt="Healthcare professional providing medical care"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Medicines */}
+      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
+        <div className="overflow-hidden rounded-3xl border border-[#dbeafe] bg-white">
+          <div className="grid lg:grid-cols-[1fr_0.9fr]">
+            {/* Left Content */}
+            <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+              <span className="w-fit rounded-md bg-[#eaf6ff] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
+                Medicines & Pharmacy
+              </span>
+
+              <h2 className="mt-5 max-w-xl font-['Outfit'] text-3xl font-bold leading-tight text-[#0f172a] sm:text-4xl">
+                Get medicines delivered to your doorstep
+              </h2>
+
+              <p className="mt-4 max-w-xl text-base leading-7 text-[#64748b]">
+                Order prescription and everyday medicines from trusted
+                pharmacies. Get your medicines delivered quickly and
+                conveniently.
+              </p>
+
+              <div className="mt-7">
+                <Link
+                  to="/medicines"
+                  className="inline-flex items-center rounded-lg bg-[#1a73e8] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
+                >
+                  Get Medicines
+                  <span className="ml-2">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Visual */}
+            <div className="relative min-h-[280px] bg-[#f0f7ff]">
+              <img
+                src="https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=1200&q=85"
+                alt="Medicines and healthcare"
                 className="h-full w-full object-cover"
               />
             </div>

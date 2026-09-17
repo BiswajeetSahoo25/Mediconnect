@@ -4,7 +4,10 @@ import { getMedicines } from "../services/medicine.service";
 import type { MedicinePreview } from "../types/medicine";
 import { getMedicineImage, getMedicineImageAlt } from "../utils/medicineImage";
 
-function getPaginationRange(currentPage: number, totalPages: number): (number | "...")[] {
+function getPaginationRange(
+  currentPage: number,
+  totalPages: number,
+): (number | "...")[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
@@ -37,7 +40,9 @@ function formatMedicineName(name: string): string {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
-}function MedicineCard({ medicine }: { medicine: MedicinePreview }) {
+}
+
+function MedicineCard({ medicine }: { medicine: MedicinePreview }) {
   const displayName = formatMedicineName(medicine.name);
   const imageSrc = getMedicineImage(medicine.name);
   const imageAlt = getMedicineImageAlt(medicine.name);
@@ -47,59 +52,94 @@ function formatMedicineName(name: string): string {
       to={`/medicines/${encodeURIComponent(medicine.id)}`}
       className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50"
     >
-      {/* Medicine image */}
-      <div className="overflow-hidden rounded-t-2xl">
-        <img
-          src={imageSrc}
-          alt={imageAlt}
-          className="h-28 w-full object-cover transition group-hover:scale-105 group-hover:opacity-90"
-          loading="lazy"
-        />
-      </div>
-
       <div className="p-5">
-        <div className="flex items-center justify-between">
-          <span className="rounded-full bg-[#1a73e8]/10 px-3 py-1 font-['DM_Sans'] text-xs font-semibold text-[#1a73e8]">
-            {medicine.source}
-          </span>
+        {/* Medicine header */}
+        <div className="flex items-center gap-4">
+          {/* Circular medicine image */}
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+            <img
+              src={imageSrc}
+              alt={imageAlt}
+              className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+              loading="lazy"
+            />
+          </div>
 
-          {medicine.dosageForm && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 font-['DM_Sans'] text-xs text-slate-500">
-              {medicine.dosageForm}
-            </span>
-          )
-        }
-      </div>
+          {/* Medicine name + badges */}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#1a73e8]/10 px-3 py-1 font-['DM_Sans'] text-xs font-semibold text-[#1a73e8]">
+                {medicine.source}
+              </span>
 
-      <h3 className="mt-4 font-['Outfit'] text-xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[#1a73e8]">
-        {displayName}
-      </h3>
+              {medicine.dosageForm && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 font-['DM_Sans'] text-xs text-slate-500">
+                  {medicine.dosageForm}
+                </span>
+              )}
+            </div>
 
-        {medicine.genericName && (
-          <p className="mt-2 font-['DM_Sans'] text-sm text-slate-500 italic">
-            Generic: {formatMedicineName(medicine.genericName)}
-          </p>
-        )}
+            <h3 className="mt-3 font-['Outfit'] text-xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[#1a73e8]">
+              {displayName}
+            </h3>
+          </div>
+        </div>
 
-        {medicine.manufacturer && (
-          <p className="mt-2 flex items-center gap-1.5 font-['DM_Sans'] text-xs text-slate-500">
-            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true">
-              <path d="M20 7h-4.586l-1.121-1.121-6.586 6.586-4.121-4.121L1 15.586 3.414 18l8.67-8.67-4.586-4.586L20 7z" fill="currentColor"/>
-              <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8"/>
-            </svg>
-            {medicine.manufacturer}
-          </p>
-        )}
+        {/* Medicine details */}
+        <div className="mt-5 border-t border-slate-100 pt-4">
+          {medicine.genericName && (
+            <p className="font-['DM_Sans'] text-sm text-slate-500 italic">
+              Generic: {formatMedicineName(medicine.genericName)}
+            </p>
+          )}
 
-        {medicine.route && (
-          <p className="mt-1.5 flex items-center gap-1.5 font-['DM_Sans'] text-xs text-slate-400">
-            <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true">
-              <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
-            </svg>
-            Route: {medicine.route}
-          </p>
-        )}
+          {medicine.manufacturer && (
+            <p className="mt-3 flex items-center gap-1.5 font-['DM_Sans'] text-xs text-slate-500">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4 w-4 shrink-0 text-slate-400"
+                aria-hidden="true"
+              >
+                <path
+                  d="M20 7h-4.586l-1.121-1.121-6.586 6.586-4.121-4.121L1 15.586 3.414 18l8.67-8.67-4.586-4.586L20 7z"
+                  fill="currentColor"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+              </svg>
 
+              {medicine.manufacturer}
+            </p>
+          )}
+
+          {medicine.route && (
+            <p className="mt-2 flex items-center gap-1.5 font-['DM_Sans'] text-xs text-slate-400">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-3.5 w-3.5 shrink-0 text-slate-400"
+                aria-hidden="true"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                />
+              </svg>
+              Route: {medicine.route}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
           <span className="font-['DM_Sans'] text-xs text-slate-400">
             {medicine.source} drug information
@@ -117,21 +157,31 @@ function formatMedicineName(name: string): string {
 function MedicineSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5">
-      {/* Image skeleton */}
-      <div className="mb-4 h-28 w-full animate-pulse rounded-t-2xl bg-slate-200" />
+      {/* Medicine header skeleton */}
+      <div className="flex items-center gap-4">
+        <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-slate-200" />
 
-      <div className="flex justify-between">
-        <div className="h-6 w-24 animate-pulse rounded-full bg-slate-200" />
-        <div className="h-6 w-24 animate-pulse rounded-full bg-slate-200" />
+        <div className="flex-1">
+          <div className="flex gap-2">
+            <div className="h-6 w-20 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-6 w-20 animate-pulse rounded-full bg-slate-200" />
+          </div>
+
+          <div className="mt-3 h-6 w-3/4 animate-pulse rounded bg-slate-200" />
+        </div>
       </div>
 
-      <div className="mt-4 h-6 w-3/4 animate-pulse rounded bg-slate-200" />
+      {/* Details skeleton */}
+      <div className="mt-5 border-t border-slate-100 pt-4">
+        <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
 
-      <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+        <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-slate-200" />
 
-      <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+        <div className="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-200" />
+      </div>
 
-      <div className="mt-4 flex justify-between pt-4 border-t border-slate-100">
+      {/* Footer skeleton */}
+      <div className="mt-5 flex justify-between border-t border-slate-100 pt-4">
         <div className="h-3.5 w-20 animate-pulse rounded bg-slate-200" />
         <div className="h-3.5 w-16 animate-pulse rounded bg-slate-200" />
       </div>
@@ -151,7 +201,9 @@ function MedicinesPage() {
   const [totalMedicines, setTotalMedicines] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const setSearchInputValue = useState(search)[1];
+
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadMedicines = useCallback(async () => {
@@ -231,6 +283,7 @@ function MedicinesPage() {
 
   return (
     <div className="bg-[#f8fafc] text-slate-900">
+      {/* Hero */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-20">
           <div className="max-w-3xl">
@@ -250,6 +303,7 @@ function MedicinesPage() {
             </p>
           </div>
 
+          {/* Search */}
           <div className="mt-10 max-w-2xl">
             <label htmlFor="medicine-search" className="sr-only">
               Search medicines
@@ -283,6 +337,7 @@ function MedicinesPage() {
         </div>
       </section>
 
+      {/* Medicines */}
       <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -291,9 +346,7 @@ function MedicinesPage() {
             </p>
 
             <h2 className="mt-2 font-['Outfit'] text-2xl font-bold text-slate-900 sm:text-3xl">
-              {search
-                ? `Results for "${search}"`
-                : "Browse medicines by name"}
+              {search ? `Results for "${search}"` : "Browse medicines by name"}
             </h2>
           </div>
 
@@ -304,6 +357,7 @@ function MedicinesPage() {
           </p>
         </div>
 
+        {/* Loading */}
         {loading ? (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }, (_, index) => (
@@ -311,6 +365,7 @@ function MedicinesPage() {
             ))}
           </div>
         ) : error ? (
+          /* Error */
           <div className="mt-8 rounded-2xl border border-red-100 bg-red-50 px-6 py-10 text-center">
             <p className="font-['DM_Sans'] text-sm text-red-600">{error}</p>
 
@@ -328,6 +383,7 @@ function MedicinesPage() {
             </button>
           </div>
         ) : medicines.length === 0 ? (
+          /* No medicines */
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
             <h3 className="font-['Outfit'] text-xl font-semibold text-slate-900">
               {search ? "No medicines found" : "No medicines to display"}
@@ -351,12 +407,14 @@ function MedicinesPage() {
           </div>
         ) : (
           <>
+            {/* Medicine cards */}
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {medicines.map((medicine) => (
                 <MedicineCard key={medicine.id} medicine={medicine} />
               ))}
             </div>
 
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="mt-12 flex flex-col items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -370,29 +428,30 @@ function MedicinesPage() {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {getPaginationRange(page, totalPages).map((pageNumber, idx) => (
-                      pageNumber === "..." ? (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="h-10 w-10 flex items-center justify-center font-['DM_Sans'] text-sm text-slate-400"
-                        >
-                          …
-                        </span>
-                      ) : (
-                        <button
-                          key={pageNumber}
-                          type="button"
-                          onClick={() => handlePageChange(pageNumber)}
-                          className={`h-10 w-10 rounded-xl font-['DM_Sans'] text-sm font-semibold transition ${
-                            page === pageNumber
-                              ? "bg-[#1a73e8] text-white"
-                              : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-[#1a73e8]"
-                          }`}
-                        >
-                          {pageNumber}
-                        </button>
-                      )
-                    ))}
+                    {getPaginationRange(page, totalPages).map(
+                      (pageNumber, idx) =>
+                        pageNumber === "..." ? (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="flex h-10 w-10 items-center justify-center font-['DM_Sans'] text-sm text-slate-400"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={pageNumber}
+                            type="button"
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`h-10 w-10 rounded-xl font-['DM_Sans'] text-sm font-semibold transition ${
+                              page === pageNumber
+                                ? "bg-[#1a73e8] text-white"
+                                : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-[#1a73e8]"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        ),
+                    )}
                   </div>
 
                   <button
@@ -414,6 +473,7 @@ function MedicinesPage() {
         )}
       </main>
 
+      {/* About FDA information */}
       <section className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
           <div className="max-w-3xl">

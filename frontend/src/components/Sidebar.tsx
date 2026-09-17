@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { settingsIcon } from "../assets/icons";
 
 type IconProps = {
   className?: string;

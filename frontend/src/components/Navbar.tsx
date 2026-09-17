@@ -34,7 +34,7 @@ function Navbar() {
             </span>
 
             <span className="font-['Outfit'] text-[24px] font-extrabold leading-none tracking-tight text-[#1a73e8]">
-              Medico
+              MediCo
             </span>
           </Link>
 

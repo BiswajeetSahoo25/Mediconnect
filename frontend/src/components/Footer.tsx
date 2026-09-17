@@ -107,7 +107,7 @@ function Footer() {
               </span>
 
               <span className="font-['Outfit'] text-[24px] font-extrabold leading-none text-white">
-                Medico
+                MediCo
               </span>
             </Link>
 

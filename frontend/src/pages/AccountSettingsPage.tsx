@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFieldArray, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { useAuth } from "../hooks/useAuth";
 
 import {
   getCurrentUser,
@@ -57,6 +60,9 @@ const emptyEmergencyContact = {
 };
 
 function AccountSettingsPage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
   const [, setUser] = useState<CurrentUser | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
 
@@ -64,6 +70,7 @@ function AccountSettingsPage() {
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [editingAddressIndex, setEditingAddressIndex] = useState<number | null>(
     null,
@@ -206,6 +213,22 @@ function AccountSettingsPage() {
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      setIsLoggingOut(true);
+      setSaveError("");
+
+      await logout();
+
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+
+      setSaveError("Unable to log out. Please try again.");
+      setIsLoggingOut(false);
     }
   }
 
@@ -395,16 +418,13 @@ function AccountSettingsPage() {
         updatePatient({
           firstName: data.firstName,
           lastName: data.lastName,
-
           dateOfBirth: data.dateOfBirth || undefined,
-
           gender: data.gender || undefined,
           bloodGroup: data.bloodGroup || undefined,
         }),
       ]);
 
       const completeAddresses = data.addresses.filter(isAddressComplete);
-
       const completeContacts = data.emergencyContacts.filter(isContactComplete);
 
       await Promise.all(
@@ -527,15 +547,26 @@ function AccountSettingsPage() {
       )}
 
       <div className="mx-auto max-w-6xl">
-        <header className="mb-6">
-          <h1 className="text-[28px] font-bold leading-tight text-[#0f172a]">
-            Account Settings
-          </h1>
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[28px] font-bold leading-tight text-[#0f172a]">
+              Account Settings
+            </h1>
 
-          <p className="mt-1 text-sm text-[#64748b]">
-            Keep your personal credentials and emergency contact info up to date
-            to ensure safe care.
-          </p>
+            <p className="mt-1 text-sm text-[#64748b]">
+              Keep your personal credentials and emergency contact info up to
+              date to ensure safe care.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            disabled={isLoggingOut}
+            className="shrink-0 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
         </header>
 
         {saveError && (
@@ -549,8 +580,6 @@ function AccountSettingsPage() {
           className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
         >
           <div className="flex flex-col gap-6">
-            {/* PERSONAL INFORMATION */}
-
             <section className="rounded-2xl border border-[#e2e8f0] bg-white p-6">
               <div className="mb-5 border-b border-[#e2e8f0] pb-4">
                 <h2 className="text-lg font-semibold text-[#0f172a]">
@@ -715,8 +744,6 @@ function AccountSettingsPage() {
                 </div>
               </div>
             </section>
-
-            {/* ADDRESSES */}
 
             <section className="rounded-2xl border border-[#e2e8f0] bg-white p-6">
               <div className="mb-5 flex items-start justify-between border-b border-[#e2e8f0] pb-4">
@@ -969,8 +996,6 @@ function AccountSettingsPage() {
               )}
             </section>
 
-            {/* EMERGENCY CONTACTS */}
-
             <section className="rounded-2xl border border-[#e2e8f0] bg-white p-6">
               <div className="mb-5 flex items-start justify-between border-b border-[#e2e8f0] pb-4">
                 <div>
@@ -1173,8 +1198,6 @@ function AccountSettingsPage() {
               </button>
             </div>
           </div>
-
-          {/* RIGHT SIDEBAR */}
 
           <aside className="flex flex-col gap-6">
             <section className="rounded-2xl border border-[#e2e8f0] bg-white p-6">
