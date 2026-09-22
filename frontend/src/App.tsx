@@ -25,6 +25,8 @@ import HealthcareDetailsPage from "./pages/HealthcareDetailsPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import DoctorProfilePage from "./pages/DoctorProfilePage";
+import BookAppointmentPage from "./pages/BookAppointmentPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
 import FAQPage from "./pages/FAQPage";
 import HelpPage from "./pages/HelpPage";
 import ContactPage from "./pages/ContactPage";
@@ -93,20 +95,14 @@ function App() {
                   <Route path="/account" element={<AccountSettingsPage />} />
                   <Route path="/doctors" element={<DoctorsPage />} />
                   <Route path="/doctors/:id" element={<DoctorProfilePage />} />
+                  <Route
+                    path="/doctors/:id/book"
+                    element={<BookAppointmentPage />}
+                  />
 
                   <Route
                     path="/appointments"
-                    element={
-                      <FeaturePage
-                        eyebrow="Your care plan"
-                        title="Appointments"
-                        description="Your upcoming and previous appointments will be listed here as you book care."
-                        action={{
-                          label: "Find a doctor",
-                          to: "/doctors",
-                        }}
-                      />
-                    }
+                    element={<AppointmentsPage />}
                   />
                   <Route
                     path="/records"

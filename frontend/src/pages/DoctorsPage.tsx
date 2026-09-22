@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDoctors } from "../services/doctor.service";
+import {
+  getDoctors,
+  getSpecializations,
+  type SpecializationOption,
+} from "../services/doctor.service";
 import type { Doctor } from "../types/doctor";
 
 interface DoctorCard {
@@ -61,191 +65,100 @@ function mapDoctorToCard(doctor: Doctor, index: number): DoctorCard {
   };
 }
 
+const PAGE_SIZE = 6;
+
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
+  const [specializations, setSpecializations] = useState<
+    SpecializationOption[]
+  >([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("All");
-  const [selectedExperience, setSelectedExperience] = useState("All");
-  const [selectedGender, setSelectedGender] = useState("All");
-  const [selectedAvailability, setSelectedAvailability] = useState("All");
-  const [maxFee, setMaxFee] = useState(2000);
-  const [sortBy, setSortBy] = useState("relevance");
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
-  const doctorsPerPage = 6;
+  const [searchInput, setSearchInput] = useState("");
 
+  // Load specialization options once for the specialty filter.
   useEffect(() => {
-    async function fetchDoctors() {
+    async function fetchSpecializations() {
       try {
-        setLoading(true);
-        setError(null);
+        const response = await getSpecializations();
 
-        const response = await getDoctors({
-          page: 1,
-          limit: 20,
-        });
-
-        setDoctors(response.data.items);
+        setSpecializations(response.data);
       } catch (error) {
-        console.error("Failed to fetch doctors:", error);
-        setError("Failed to load doctors. Please try again.");
-      } finally {
-        setLoading(false);
+        // The specialty filter simply stays empty if this fails.
+        console.error("Failed to fetch specializations:", error);
       }
     }
 
-    fetchDoctors();
+    fetchSpecializations();
   }, []);
+
+  const selectedSpecializationId = useMemo(() => {
+    if (selectedSpecialty === "All") {
+      return undefined;
+    }
+
+    return specializations.find(
+      (specialization) => specialization.name === selectedSpecialty,
+    )?.id;
+  }, [selectedSpecialty, specializations]);
+
+  const fetchDoctors = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await getDoctors({
+        page: currentPage,
+        limit: PAGE_SIZE,
+        ...(search.trim() ? { search: search.trim() } : {}),
+        ...(selectedSpecializationId ? { specializationId: selectedSpecializationId } : {}),
+      });
+
+      setDoctors(response.data.items);
+      setTotalPages(Math.max(1, response.data.pagination.totalPages));
+      setTotalResults(response.data.pagination.total);
+    } catch (error) {
+      console.error("Failed to fetch doctors:", error);
+      setError("Failed to load doctors. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, search, selectedSpecializationId]);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
 
   const doctorCards = useMemo(() => {
     return doctors.map((doctor, index) => mapDoctorToCard(doctor, index));
   }, [doctors]);
 
-  const specialties = useMemo(() => {
-    const values = doctorCards.map((doctor) => doctor.specialty);
+  // Debounced search: only hits the backend after the user stops typing.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setCurrentPage(1);
+      setSearch(searchInput);
+    }, 400);
 
-    return ["All", ...Array.from(new Set(values))];
-  }, [doctorCards]);
-
-  const filteredDoctors = useMemo(() => {
-    let result = [...doctorCards];
-
-    // Search
-    if (search.trim()) {
-      const query = search.toLowerCase();
-
-      result = result.filter((doctor) =>
-        [doctor.name, doctor.specialty, doctor.experience].some((value) =>
-          value.toLowerCase().includes(query),
-        ),
-      );
-    }
-
-    // Specialty
-    if (selectedSpecialty !== "All") {
-      result = result.filter(
-        (doctor) => doctor.specialty === selectedSpecialty,
-      );
-    }
-
-    // Experience
-    if (selectedExperience !== "All") {
-      result = result.filter((doctor) => {
-        const years = Number.parseInt(doctor.experience);
-
-        switch (selectedExperience) {
-          case "0-5":
-            return years <= 5;
-
-          case "5-10":
-            return years > 5 && years <= 10;
-
-          case "10+":
-            return years > 10;
-
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Fee
-    result = result.filter((doctor) => {
-      const fee = Number.parseInt(doctor.fee.replace(/[^\d]/g, ""));
-
-      return Number.isNaN(fee) || fee <= maxFee;
-    });
-
-    // Availability
-    if (selectedAvailability !== "All") {
-      result = result.filter(
-        (doctor) => doctor.availabilityType === selectedAvailability,
-      );
-    }
-
-    // Sorting
-    if (sortBy === "experience-high") {
-      result.sort((a, b) => {
-        const aYears = Number.parseInt(a.experience) || 0;
-        const bYears = Number.parseInt(b.experience) || 0;
-
-        return bYears - aYears;
-      });
-    }
-
-    if (sortBy === "experience-low") {
-      result.sort((a, b) => {
-        const aYears = Number.parseInt(a.experience) || 0;
-        const bYears = Number.parseInt(b.experience) || 0;
-
-        return aYears - bYears;
-      });
-    }
-
-    if (sortBy === "fee-low") {
-      result.sort((a, b) => {
-        const aFee = Number.parseInt(a.fee.replace(/[^\d]/g, "")) || 0;
-
-        const bFee = Number.parseInt(b.fee.replace(/[^\d]/g, "")) || 0;
-
-        return aFee - bFee;
-      });
-    }
-
-    if (sortBy === "fee-high") {
-      result.sort((a, b) => {
-        const aFee = Number.parseInt(a.fee.replace(/[^\d]/g, "")) || 0;
-
-        const bFee = Number.parseInt(b.fee.replace(/[^\d]/g, "")) || 0;
-
-        return bFee - aFee;
-      });
-    }
-
-    return result;
-  }, [
-    doctorCards,
-    search,
-    selectedSpecialty,
-    selectedExperience,
-    selectedAvailability,
-    maxFee,
-    sortBy,
-  ]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredDoctors.length / doctorsPerPage),
-  );
-
-  const paginatedDoctors = filteredDoctors.slice(
-    (currentPage - 1) * doctorsPerPage,
-    currentPage * doctorsPerPage,
-  );
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [
-    search,
-    selectedSpecialty,
-    selectedExperience,
-    selectedAvailability,
-    maxFee,
-    sortBy,
-  ]);
+  }, [selectedSpecialty]);
 
   const clearFilters = () => {
+    setSearchInput("");
     setSearch("");
     setSelectedSpecialty("All");
-    setSelectedExperience("All");
-    setSelectedGender("All");
-    setSelectedAvailability("All");
-    setMaxFee(2000);
-    setSortBy("relevance");
     setCurrentPage(1);
   };
 
@@ -265,9 +178,9 @@ export default function DoctorsPage() {
             <div className="flex-1">
               <input
                 type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search doctors or specialties..."
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Search doctors by name or license number..."
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
@@ -300,7 +213,7 @@ export default function DoctorsPage() {
               </button>
             </div>
 
-            {/* Specialty */}
+            {/* Specialty (backend-supported filter) */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Specialty
@@ -311,93 +224,21 @@ export default function DoctorsPage() {
                 onChange={(event) => setSelectedSpecialty(event.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
               >
-                {specialties.map((specialty) => (
-                  <option key={specialty} value={specialty}>
-                    {specialty}
+                <option value="All">All specialties</option>
+
+                {specializations.map((specialization) => (
+                  <option key={specialization.id} value={specialization.name}>
+                    {specialization.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Experience */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Experience
-              </label>
-
-              <select
-                value={selectedExperience}
-                onChange={(event) => setSelectedExperience(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              >
-                <option value="All">Any experience</option>
-                <option value="0-5">0 - 5 Years</option>
-                <option value="5-10">5 - 10 Years</option>
-                <option value="10+">10+ Years</option>
-              </select>
-            </div>
-
-            {/* Gender */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gender
-              </label>
-
-              <select
-                value={selectedGender}
-                onChange={(event) => setSelectedGender(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              >
-                <option value="All">Any gender</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-              </select>
-
-              <p className="mt-2 text-xs text-gray-500">
-                Gender filtering will be connected when gender is available in
-                the doctor profile data.
-              </p>
-            </div>
-
-            {/* Availability */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Availability
-              </label>
-
-              <select
-                value={selectedAvailability}
-                onChange={(event) =>
-                  setSelectedAvailability(event.target.value)
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              >
-                <option value="All">Any availability</option>
-                <option value="today">Available Today</option>
-                <option value="later">Available Later</option>
-              </select>
-            </div>
-
-            {/* Fee */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Consultation Fee
-                </label>
-
-                <span className="text-sm text-gray-600">₹{maxFee}</span>
-              </div>
-
-              <input
-                type="range"
-                min="500"
-                max="2000"
-                step="50"
-                value={maxFee}
-                onChange={(event) => setMaxFee(Number(event.target.value))}
-                className="w-full"
-              />
-            </div>
+            <p className="mt-6 text-xs text-gray-500">
+              Experience, gender, availability and fee filters are not
+              currently supported by the doctor search API and have been
+              removed.
+            </p>
           </aside>
 
           {/* Results */}
@@ -409,21 +250,9 @@ export default function DoctorsPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   {loading
                     ? "Loading doctors..."
-                    : `${filteredDoctors.length} doctors found`}
+                    : `${totalResults} doctors found`}
                 </p>
               </div>
-
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 bg-white"
-              >
-                <option value="relevance">Sort by relevance</option>
-                <option value="experience-high">Experience: High to Low</option>
-                <option value="experience-low">Experience: Low to High</option>
-                <option value="fee-low">Fee: Low to High</option>
-                <option value="fee-high">Fee: High to Low</option>
-              </select>
             </div>
 
             {/* Loading */}
@@ -440,7 +269,7 @@ export default function DoctorsPage() {
 
                 <button
                   type="button"
-                  onClick={() => window.location.reload()}
+                  onClick={fetchDoctors}
                   className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                 >
                   Try Again
@@ -449,7 +278,7 @@ export default function DoctorsPage() {
             )}
 
             {/* Empty */}
-            {!loading && !error && paginatedDoctors.length === 0 && (
+            {!loading && !error && doctorCards.length === 0 && (
               <div className="bg-white rounded-2xl border p-12 text-center">
                 <h3 className="text-lg font-semibold text-gray-900">
                   No doctors found
@@ -472,7 +301,7 @@ export default function DoctorsPage() {
             {/* Doctor cards */}
             {!loading && !error && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {paginatedDoctors.map((doctor) => (
+                {doctorCards.map((doctor) => (
                   <div
                     key={doctor.id}
                     className="bg-white rounded-2xl border p-6 hover:shadow-md transition-shadow"
@@ -553,7 +382,7 @@ export default function DoctorsPage() {
                       </Link>
 
                       <Link
-                        to={`/doctors/${doctor.id}`}
+                        to={`/doctors/${doctor.id}/book`}
                         className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700"
                       >
                         Book Appointment
@@ -564,8 +393,8 @@ export default function DoctorsPage() {
               </div>
             )}
 
-            {/* Pagination */}
-            {!loading && !error && filteredDoctors.length > 0 && (
+            {/* Pagination (backend-driven) */}
+            {!loading && !error && totalPages > 1 && (
               <div className="mt-8 flex items-center justify-center gap-2">
                 <button
                   type="button"
@@ -578,23 +407,22 @@ export default function DoctorsPage() {
                   Previous
                 </button>
 
-                {Array.from(
-                  { length: totalPages },
-                  (_, index) => index + 1,
-                ).map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`rounded-lg px-4 py-2 text-sm ${
-                      currentPage === page
-                        ? "bg-blue-600 text-white"
-                        : "border border-gray-300 bg-white text-gray-700"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`rounded-lg px-4 py-2 text-sm ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "border border-gray-300 bg-white text-gray-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
 
                 <button
                   type="button"

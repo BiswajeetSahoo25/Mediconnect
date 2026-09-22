@@ -28,21 +28,6 @@ export interface DoctorFacility {
   availability?: DoctorAvailability[];
 }
 
-export interface DoctorFacility {
-  id: string;
-  facilityId: string;
-  facilityName: string;
-  facilityType: string;
-  departmentId: string;
-  departmentName: string;
-  consultationFee: string;
-  consultationMode: string;
-  onlineBookingEnabled: boolean;
-  onlineBookingLimit: number | null;
-  joiningDate: string;
-  availability?: DoctorAvailability[];
-}
-
 export interface Doctor {
   id: string;
   userId: string;

@@ -12,6 +12,7 @@ import {
   appointmentIdSchema,
   cancelAppointmentSchema,
   createAppointmentSchema,
+  doctorFacilityIdSchema,
   listAppointmentsQuerySchema,
 } from "../validators/appointment.validator.js";
 
@@ -31,6 +32,15 @@ router.post(
   "/",
   validate({ body: createAppointmentSchema }),
   appointmentController.create.bind(appointmentController),
+);
+
+// Bookable dates + time windows for a doctor facility assignment
+// (respects availability, leaves, booking window and booking limits).
+// Registered before "/:id" so "availability" is not treated as an id.
+router.get(
+  "/availability/:doctorFacilityId",
+  validate({ params: doctorFacilityIdSchema }),
+  appointmentController.getAvailability.bind(appointmentController),
 );
 
 // Doctor's own appointments

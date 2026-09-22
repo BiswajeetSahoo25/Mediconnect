@@ -235,7 +235,7 @@ function DoctorProfilePage() {
             {/* Actions */}
             <div className="mt-5 flex items-center gap-2">
               <Link
-                to={`/doctors/${doctor.id}`}
+                to={`/doctors/${doctor.id}/book`}
                 className="rounded-lg bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Book Appointment

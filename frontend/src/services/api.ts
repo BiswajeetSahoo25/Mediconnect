@@ -74,7 +74,7 @@ export class ApiError extends Error {
   }
 }
 
-function handleApiError(error: unknown): never {
+export function handleApiError(error: unknown): never {
   if (axios.isAxiosError<ApiErrorResponse>(error)) {
     const result = error.response?.data;
 

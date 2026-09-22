@@ -25,6 +25,21 @@ export async function getDoctorById(id: string) {
   return response.data;
 }
 
+export interface SpecializationOption {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export async function getSpecializations() {
+  const response = await api.get<{
+    status: "success";
+    data: SpecializationOption[];
+  }>("/doctors/specializations");
+
+  return response.data;
+}
+
 export interface DoctorAvailabilityResponse {
   status: "success";
   data: {

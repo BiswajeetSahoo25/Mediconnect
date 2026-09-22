@@ -8,8 +8,9 @@ import type {
   AppointmentIdInput,
   CancelAppointmentInput,
   CreateAppointmentInput,
+  DoctorFacilityIdInput,
   ListAppointmentsQuery,
-} from "../validators/appointment.validator.js";
+} from "../validators/appointment.validator.js";;
 
 const appointmentService = new AppointmentService(new AppointmentRepository());
 
@@ -74,6 +75,19 @@ export class AppointmentController {
     return res.status(200).json({
       status: "success",
       data: appointment,
+    });
+  }
+
+  async getAvailability(req: Request, res: Response) {
+    const { doctorFacilityId } = req.validated.params as DoctorFacilityIdInput;
+
+    const availability = await appointmentService.getAvailability(
+      doctorFacilityId,
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: availability,
     });
   }
 

@@ -161,7 +161,7 @@ function MedicineDetailsPage() {
         setLoading(true);
         setNotFound(false);
         setError(null);
-        const response = await getMedicineById(id);
+        const response = await getMedicineById(id as string);
         setMedicine(response.data);
       } catch (err) {
         if (err instanceof Error && "statusCode" in err && (err as { statusCode?: number }).statusCode === 404) {
@@ -241,7 +241,9 @@ function MedicineDetailsPage() {
           .join(" ")
       : undefined;
 
-  const hasData = (v?: string | string[] | null) =>
+  const hasData = <T extends string | string[] | null | undefined>(
+    v: T,
+  ): v is Exclude<T, null | undefined> =>
     Array.isArray(v) ? v.length > 0 : typeof v === "string" ? v.trim().length > 0 : false;
 
   // ---- Render ---------------------------------------------------------
@@ -503,7 +505,7 @@ function MedicineDetailsPage() {
               </svg>
               Inactive Ingredients
             </h2>
-            <p className="font-['DM_Sans'] text-sm text-slate-600">{medicine.inactiveIngredients.join(", ")}</p>
+            <p className="font-['DM_Sans'] text-sm text-slate-600">{(medicine.inactiveIngredients ?? []).join(", ")}</p>
           </div>
         )}
 

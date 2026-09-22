@@ -23,6 +23,21 @@ function formatTime(time: Date) {
   return time.toISOString().slice(11, 16);
 }
 
+function isDateOnLeave(
+  doctorLeaves: Array<{ startDate: Date; endDate: Date }>,
+  facilityLeaves: Array<{ startDate: Date; endDate: Date }>,
+  date: Date,
+) {
+  const targetDate = startOfDay(date);
+
+  return [...doctorLeaves, ...facilityLeaves].some((leave) => {
+    const start = startOfDay(leave.startDate);
+    const end = startOfDay(leave.endDate);
+
+    return targetDate >= start && targetDate <= end;
+  });
+}
+
 export class DoctorService {
   constructor(private readonly doctorRepository: DoctorRepository) {}
 
@@ -144,6 +159,17 @@ export class DoctorService {
       throw new NotFoundError("Doctor facility assignment not found");
     }
 
+    if (isDateOnLeave(assignment.doctor.leaves, assignment.leaves, date)) {
+      return {
+        doctorFacilityId: assignment.id,
+        date,
+        windows: [],
+        onLeave: true,
+        onlineBookingEnabled: assignment.onlineBookingEnabled,
+        onlineBookingLimit: assignment.onlineBookingLimit,
+      };
+    }
+
     const dayOfWeek = date.getUTCDay();
 
     const windows = assignment.availability
@@ -157,6 +183,7 @@ export class DoctorService {
       doctorFacilityId: assignment.id,
       date,
       windows,
+      onLeave: false,
       onlineBookingEnabled: assignment.onlineBookingEnabled,
       onlineBookingLimit: assignment.onlineBookingLimit,
     };

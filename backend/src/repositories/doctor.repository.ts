@@ -78,6 +78,12 @@ export class DoctorRepository {
       },
       include: {
         availability: { where: { isActive: true } },
+        leaves: { where: { isApproved: true } },
+        doctor: {
+          include: {
+            leaves: { where: { isApproved: true } },
+          },
+        },
       },
     });
   }
