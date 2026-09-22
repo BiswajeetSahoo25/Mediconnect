@@ -1,78 +1,143 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getDoctorById } from "../services/doctor.service";
+import type { Doctor } from "../types/doctor";
 
-const doctor = {
-  name: "Dr. Ananya Sharma",
-  specialty: "Cardiologist",
-  hospital: "Apollo Hospitals, Mumbai",
-  image:
-    "https://www.figma.com/api/mcp/asset/6a350711-9696-4cf2-9d3f-faca5db465be.png",
-  experience: "12 Years",
-  consultationFee: "₹1,000",
-  qualification: "MBBS, MD (General Medicine), DM (Cardiology)",
-  verified: true,
-  rating: "4.9",
-  reviews: 124,
-  languages: ["English (Fluent)", "Hindi (Fluent)", "Marathi (Fluent)"],
-};
-
-const qualifications = [
-  {
-    degree: "DM – Cardiology",
-    institution: "Seth GS Medical College & KEM Hospital, Mumbai",
-    period: "2014 - 2017",
-  },
-  {
-    degree: "MD – General Medicine",
-    institution: "Seth GS Medical College & KEM Hospital, Mumbai",
-    period: "2011 - 2014",
-  },
-  {
-    degree: "MBBS",
-    institution: "Grant Medical College & Sir JJ Hospital, Mumbai",
-    period: "2006 - 2011",
-  },
-];
-
-const certifications = [
-  {
-    title: "Fellow of the Indian College of Cardiology",
-    institution: "Indian College of Cardiology • 2020",
-  },
-  {
-    title: "Member – Cardiological Society of India",
-    institution: "Cardiological Society of India • 2018",
-  },
-];
-
-const workExperience = [
-  {
-    role: "Senior Consultant Cardiologist",
-    hospital: "Apollo Hospitals, Mumbai",
-    period: "2020 - Present",
-  },
-  {
-    role: "Consultant Cardiologist",
-    hospital: "Fortis Hospital, Mumbai",
-    period: "2017 - 2020",
-  },
-  {
-    role: "Cardiology Resident",
-    hospital: "KEM Hospital, Mumbai",
-    period: "2014 - 2017",
-  },
-];
-
+const doctorAvatar =
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10";
 const tabs = [
   "About",
-  "Qualifications",
+  "Professional Details",
   "Experience",
   "Reviews",
   "Availability",
 ];
 
+function formatDay(dayOfWeek: number) {
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  return days[dayOfWeek] ?? "Unknown";
+}
+
+function formatTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  });
+}
+
 function DoctorProfilePage() {
+  const { id } = useParams<{ id: string }>();
+
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [activeTab, setActiveTab] = useState("About");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchDoctor() {
+      if (!id) {
+        setError("Doctor ID is missing.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await getDoctorById(id);
+
+        setDoctor(response.data);
+      } catch (error) {
+        console.error("Failed to fetch doctor profile:", error);
+        setError("Failed to load doctor profile.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDoctor();
+  }, [id]);
+
+  const primarySpecialization = useMemo(() => {
+    if (!doctor) {
+      return null;
+    }
+
+    return (
+      doctor.specializations.find(
+        (specialization) => specialization.isPrimary,
+      ) ?? doctor.specializations[0]
+    );
+  }, [doctor]);
+
+  const primaryFacility = useMemo(() => {
+    return doctor?.facilities[0] ?? null;
+  }, [doctor]);
+
+  const doctorName = doctor
+    ? `Dr. ${doctor.firstName}${doctor.lastName ? ` ${doctor.lastName}` : ""}`
+    : "";
+
+  const availabilityByDay = useMemo(() => {
+    if (!primaryFacility?.availability) {
+      return [];
+    }
+
+    const grouped = new Map<number, typeof primaryFacility.availability>();
+
+    for (const slot of primaryFacility.availability) {
+      const existing = grouped.get(slot.dayOfWeek) ?? [];
+      existing.push(slot);
+      grouped.set(slot.dayOfWeek, existing);
+    }
+
+    return Array.from(grouped.entries()).sort(([dayA], [dayB]) => dayA - dayB);
+  }, [primaryFacility]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[500px] w-full max-w-6xl items-center justify-center">
+        <div className="rounded-xl border border-slate-200 bg-white px-8 py-6 shadow-sm">
+          <p className="text-sm text-slate-600">Loading doctor profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !doctor) {
+    return (
+      <div className="mx-auto flex min-h-[500px] w-full max-w-6xl items-center justify-center">
+        <div className="rounded-xl border border-slate-200 bg-white px-8 py-8 text-center shadow-sm">
+          <p className="text-sm text-red-600">{error ?? "Doctor not found."}</p>
+
+          <Link
+            to="/doctors"
+            className="mt-4 inline-block rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            Back to Doctors
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -84,11 +149,11 @@ function DoctorProfilePage() {
 
         <span>›</span>
 
-        <span>{doctor.specialty}</span>
+        <span>{primarySpecialization?.name ?? "Specialist"}</span>
 
         <span>›</span>
 
-        <span className="text-slate-700">{doctor.name}</span>
+        <span className="text-slate-700">{doctorName}</span>
       </div>
 
       {/* Doctor Header */}
@@ -97,8 +162,8 @@ function DoctorProfilePage() {
           {/* Doctor Image */}
           <div className="h-36 w-36 shrink-0 overflow-hidden rounded-xl bg-slate-100">
             <img
-              src={doctor.image}
-              alt={doctor.name}
+              src={doctorAvatar}
+              alt={doctorName}
               className="h-full w-full object-cover"
             />
           </div>
@@ -106,23 +171,28 @@ function DoctorProfilePage() {
           {/* Doctor Information */}
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              {doctor.verified && (
+              {doctor.licenseVerificationStatus === "VERIFIED" && (
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
                   ✓ Verified Specialist
                 </span>
               )}
 
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
-                ★ {doctor.rating} ({doctor.reviews} reviews)
-              </span>
+              {doctor.isActive && (
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
+                  Active on MediConnect
+                </span>
+              )}
             </div>
 
             <h1 className="text-2xl font-semibold text-slate-900">
-              {doctor.name}
+              {doctorName}
             </h1>
 
             <p className="mt-1 text-sm font-medium text-blue-600">
-              {doctor.specialty} · {doctor.hospital}
+              {primarySpecialization?.name ?? "Specialist"}
+              {primaryFacility?.facilityName
+                ? ` · ${primaryFacility.facilityName}`
+                : ""}
             </p>
 
             {/* Stats */}
@@ -133,7 +203,9 @@ function DoctorProfilePage() {
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {doctor.experience}
+                  {doctor.yearsOfExperience
+                    ? `${doctor.yearsOfExperience} Years`
+                    : "Not available"}
                 </p>
               </div>
 
@@ -143,29 +215,31 @@ function DoctorProfilePage() {
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {doctor.consultationFee}
+                  {primaryFacility
+                    ? `₹${primaryFacility.consultationFee}`
+                    : "Not available"}
                 </p>
               </div>
 
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                  Qualifications
+                  Consultation Mode
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {doctor.qualification}
+                  {primaryFacility?.consultationMode ?? "Not available"}
                 </p>
               </div>
             </div>
 
             {/* Actions */}
             <div className="mt-5 flex items-center gap-2">
-              <button
-                type="button"
+              <Link
+                to={`/doctors/${doctor.id}`}
                 className="rounded-lg bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Book Appointment
-              </button>
+              </Link>
 
               <button
                 type="button"
@@ -196,9 +270,7 @@ function DoctorProfilePage() {
               {tab}
 
               {tab === "Reviews" && (
-                <span className="ml-1 text-[10px] text-slate-400">
-                  {doctor.reviews}
-                </span>
+                <span className="ml-1 text-[10px] text-slate-400">—</span>
               )}
             </button>
           ))}
@@ -211,123 +283,137 @@ function DoctorProfilePage() {
           {/* About */}
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="text-sm font-semibold text-slate-900">
-              About Dr. Ananya Sharma
+              About {doctorName}
             </h2>
 
-            <p className="mt-4 text-xs leading-6 text-slate-600">
-              Dr. Ananya Sharma is an experienced cardiologist with over 12
-              years of clinical experience in diagnosing and managing a wide
-              range of cardiovascular conditions. She has a special interest in
-              preventive cardiology, heart failure management, and
-              interventional cardiac care. She currently serves as a Senior
-              Consultant Cardiologist at Apollo Hospitals, Mumbai.
+            <p className="mt-4 whitespace-pre-line text-xs leading-6 text-slate-600">
+              {doctor.about ??
+                `${doctorName} is a verified ${primarySpecialization?.name ?? "medical specialist"} on MediConnect.`}
             </p>
+          </section>
 
-            {/* Languages */}
-            <div className="mt-5">
-              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-                Languages Spoken
-              </h3>
+          {/* Professional Details */}
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Professional Details
+            </h2>
 
-              <div className="mt-2 flex flex-wrap gap-2">
-                {doctor.languages.map((language) => (
-                  <span
-                    key={language}
-                    className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] text-slate-600"
-                  >
-                    {language}
-                  </span>
-                ))}
+            <div className="mt-5 space-y-5">
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
+                  ✓
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    License Number
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {doctor.licenseNumber}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
+                  ✓
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    License Authority
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {doctor.licenseAuthority ?? "Not available"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
+                  🎓
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Specialization
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {primarySpecialization?.name ?? "Not available"}
+                  </p>
+
+                  {primarySpecialization?.yearsInSpecialization && (
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      {primarySpecialization.yearsInSpecialization} years in
+                      specialization
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
+                  🏥
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Department
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {primaryFacility?.departmentName ?? "Not available"}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Qualifications */}
+          {/* Experience */}
           <section className="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Qualifications & Education
-            </h2>
+            <h2 className="text-sm font-semibold text-slate-900">Experience</h2>
 
-            <div className="mt-5 space-y-5">
-              {qualifications.map((item) => (
-                <div key={item.degree} className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                    🎓
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">
-                      {item.degree}
-                    </p>
-
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {item.institution}
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {item.period}
-                    </p>
-                  </div>
+            <div className="mt-5">
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
+                  🩺
                 </div>
-              ))}
-            </div>
 
-            <div className="my-5 border-t border-slate-100" />
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    Clinical Experience
+                  </p>
 
-            {/* Certifications */}
-            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-              Certifications & Licenses
-            </h3>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {doctor.yearsOfExperience
+                      ? `${doctor.yearsOfExperience} years of clinical experience`
+                      : "Experience information not available"}
+                  </p>
 
-            <div className="mt-4 space-y-4">
-              {certifications.map((item) => (
-                <div key={item.title} className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                    ✓
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">
-                      {item.title}
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {item.institution}
-                    </p>
-                  </div>
+                  <p className="mt-2 text-[10px] leading-5 text-slate-400">
+                    Detailed employment history is not currently stored in the
+                    MediConnect doctor profile.
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
           </section>
 
-          {/* Work Experience */}
+          {/* Reviews */}
           <section className="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Work Experience
-            </h2>
+            <h2 className="text-sm font-semibold text-slate-900">Reviews</h2>
 
-            <div className="mt-5 space-y-5">
-              {workExperience.map((item) => (
-                <div key={item.role} className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                    🏥
-                  </div>
+            <div className="mt-5 rounded-lg bg-slate-50 p-5 text-center">
+              <p className="text-sm font-medium text-slate-700">
+                No reviews available yet
+              </p>
 
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">
-                      {item.role}
-                    </p>
-
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {item.hospital}
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {item.period}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <p className="mt-1 text-xs text-slate-500">
+                Doctor reviews will appear here once patients submit them.
+              </p>
             </div>
           </section>
         </div>
@@ -340,93 +426,82 @@ function DoctorProfilePage() {
                 Availability
               </h2>
 
-              <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Slots Open Today
-              </span>
-            </div>
-
-            {/* Monday */}
-            <p className="mt-4 text-[10px] font-semibold text-slate-700">
-              Monday
-            </p>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["09:00 AM", "11:30 AM", "02:00 PM"].map((time) => (
-                <span
-                  key={time}
-                  className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
-                >
-                  {time}
+              {primaryFacility?.onlineBookingEnabled && (
+                <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Online Booking
                 </span>
-              ))}
+              )}
             </div>
 
-            <div className="my-4 border-t border-slate-100" />
+            {availabilityByDay.length > 0 ? (
+              <div className="mt-4 space-y-4">
+                {availabilityByDay.map(([dayOfWeek, slots]) => (
+                  <div key={dayOfWeek}>
+                    <p className="text-[10px] font-semibold text-slate-700">
+                      {formatDay(dayOfWeek)}
+                    </p>
 
-            {/* Tuesday */}
-            <p className="text-[10px] font-semibold text-slate-700">Tuesday</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {slots.map((slot) => (
+                        <span
+                          key={slot.id}
+                          className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
+                        >
+                          {formatTime(slot.startTime)} -{" "}
+                          {formatTime(slot.endTime)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-lg bg-slate-50 p-4 text-center">
+                <p className="text-xs text-slate-500">
+                  Availability not available.
+                </p>
+              </div>
+            )}
 
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["10:00 AM", "01:30 PM", "04:00 PM"].map((time) => (
-                <span
-                  key={time}
-                  className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
-                >
-                  {time}
-                </span>
-              ))}
-            </div>
+            {primaryFacility && (
+              <>
+                <div className="my-5 border-t border-slate-100" />
 
-            <div className="my-4 border-t border-slate-100" />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                    Facility
+                  </p>
 
-            {/* Wednesday */}
-            <p className="text-[10px] font-semibold text-slate-700">
-              Wednesday
-            </p>
+                  <p className="mt-2 text-xs font-medium text-slate-800">
+                    {primaryFacility.facilityName}
+                  </p>
 
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["09:00 AM", "11:30 AM", "03:00 PM"].map((time) => (
-                <span
-                  key={time}
-                  className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
-                >
-                  {time}
-                </span>
-              ))}
-            </div>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {primaryFacility.departmentName}
+                  </p>
+                </div>
 
-            <div className="my-4 border-t border-slate-100" />
+                <div className="mt-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                    Booking
+                  </p>
 
-            {/* Thursday */}
-            <p className="text-[10px] font-semibold text-slate-700">Thursday</p>
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    {primaryFacility.onlineBookingEnabled
+                      ? "Online booking is enabled."
+                      : "Online booking is currently unavailable."}
+                  </p>
 
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["02:00 PM", "04:30 PM"].map((time) => (
-                <span
-                  key={time}
-                  className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
-                >
-                  {time}
-                </span>
-              ))}
-            </div>
-
-            <div className="my-4 border-t border-slate-100" />
-
-            {/* Friday */}
-            <p className="text-[10px] font-semibold text-slate-700">Friday</p>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["09:00 AM", "11:30 AM"].map((time) => (
-                <span
-                  key={time}
-                  className="rounded-md bg-blue-50 px-2 py-1 text-[9px] text-blue-600"
-                >
-                  {time}
-                </span>
-              ))}
-            </div>
+                  {primaryFacility.onlineBookingLimit !== null && (
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Booking limit: {primaryFacility.onlineBookingLimit}{" "}
+                      appointments
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </section>
         </aside>
       </div>

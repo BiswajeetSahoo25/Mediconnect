@@ -1,579 +1,616 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { getDoctors } from "../services/doctor.service";
+import type { Doctor } from "../types/doctor";
+
+interface DoctorCard {
+  id: string;
+  name: string;
+  specialty: string;
+  experience: string;
+  fee: string;
+  rating: string;
+  reviews: string;
+  availability: string;
+  availabilityType: "today" | "later";
+  avatar?: string;
+}
 
 const doctorAvatars = [
-  "https://www.figma.com/api/mcp/asset/6a350711-9696-4cf2-9d3f-faca5db465be.png",
-  "https://www.figma.com/api/mcp/asset/cd6d1b8f-40c7-4da6-bdbc-da7b753cc50e.png",
-  "https://www.figma.com/api/mcp/asset/a4303fdb-d84f-4516-afdd-539a51762cc6.png",
-  "https://www.figma.com/api/mcp/asset/28286535-5751-4af5-8e5a-71aa5e81ec5e.png",
-  "https://www.figma.com/api/mcp/asset/d8db1c5c-cd4e-4c5d-a22b-f27918db3242.png",
-  "https://www.figma.com/api/mcp/asset/e1daacc9-0742-4ee5-8d3c-7910bb3a5d03.png",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
 ];
 
-const searchIcon =
-  "https://www.figma.com/api/mcp/asset/a314ced4-0455-4544-a14a-8ac9ab7cc081.svg";
+function mapDoctorToCard(doctor: Doctor, index: number): DoctorCard {
+  const primarySpecialization =
+    doctor.specializations.find((specialization) => specialization.isPrimary) ??
+    doctor.specializations[0];
 
-const stethoscopeIcon =
-  "https://www.figma.com/api/mcp/asset/aba09a7c-fe7c-4996-a864-a46789fb2835.svg";
+  const primaryFacility = doctor.facilities[0];
 
-const mapPinIcon =
-  "https://www.figma.com/api/mcp/asset/280e0c9e-f078-4d5e-a432-7d143569ac3d.svg";
+  return {
+    id: doctor.id,
 
-const calendarIcon =
-  "https://www.figma.com/api/mcp/asset/79322904-2428-44b8-873c-8fe1bcc25a10.svg";
+    name: `Dr. ${doctor.firstName}${
+      doctor.lastName ? ` ${doctor.lastName}` : ""
+    }`,
 
-const starIcon =
-  "https://www.figma.com/api/mcp/asset/4d1aeff1-1dc0-4ecf-9c59-29e1804c23a6.svg";
+    specialty: primarySpecialization?.name ?? "General Physician",
 
-const doctors = [
-  {
-    name: "Dr. Ananya Sharma",
-    specialty: "Cardiologist",
-    experience: "14 Years",
-    fee: "₹800",
-    rating: "4.9",
-    reviews: "142",
-    availability: "Available Today",
-    availabilityType: "today",
-    avatar: doctorAvatars[0],
-  },
-  {
-    name: "Dr. Aarav Mehta",
-    specialty: "Dermatologist",
-    experience: "10 Years",
-    fee: "₹600",
-    rating: "4.8",
-    reviews: "98",
-    availability: "Available Today",
-    availabilityType: "today",
-    avatar: doctorAvatars[1],
-  },
-  {
-    name: "Dr. Rohan Shetty",
-    specialty: "Pediatrician",
-    experience: "20 Years",
-    fee: "₹700",
-    rating: "5.0",
-    reviews: "110",
-    availability: "Available Tomorrow",
-    availabilityType: "tomorrow",
-    avatar: doctorAvatars[2],
-  },
-  {
-    name: "Dr. Priya Nair",
-    specialty: "Gynecologist",
-    experience: "15 Years",
-    fee: "₹900",
-    rating: "4.9",
-    reviews: "185",
-    availability: "Available Today",
-    availabilityType: "today",
-    avatar: doctorAvatars[3],
-  },
-  {
-    name: "Dr. Vikram Singh",
-    specialty: "General Physician",
-    experience: "18 Years",
-    fee: "₹500",
-    rating: "4.6",
-    reviews: "210",
-    availability: "Available Today",
-    availabilityType: "today",
-    avatar: doctorAvatars[4],
-  },
-  {
-    name: "Dr. Neha Kapoor",
-    specialty: "Endocrinologist",
-    experience: "16 Years",
-    fee: "₹850",
-    rating: "4.8",
-    reviews: "74",
-    availability: "Available Tomorrow",
-    availabilityType: "tomorrow",
-    avatar: doctorAvatars[5],
-  },
-];
-const specialties = [
-  "General Physician",
-  "Cardiologist",
-  "Dermatologist",
-  "Pediatrician",
-  "Gynecologist",
-];
+    experience: doctor.yearsOfExperience
+      ? `${doctor.yearsOfExperience} Years`
+      : "Experience not available",
 
-const experiences = ["1 - 5 Years", "5 - 10 Years", "10+ Years"];
+    fee: primaryFacility
+      ? `₹${primaryFacility.consultationFee}`
+      : "Fee not available",
 
-const genders = ["Male Doctors", "Female Doctors", "Any"];
+    // Reviews/ratings are not currently part of the doctor API response.
+    rating: "—",
+    reviews: "No reviews",
 
-function SearchIcon() {
-  return <img src={searchIcon} alt="" className="h-4 w-4 shrink-0" />;
+    // Availability is not yet being calculated from DoctorAvailability.
+    availability: "Check availability",
+    availabilityType: "later",
+
+    avatar: doctorAvatars[index % doctorAvatars.length],
+  };
 }
 
-function FilterIcon({ src }: { src: string }) {
-  return <img src={src} alt="" className="h-3.5 w-3.5 shrink-0" />;
-}
+export default function DoctorsPage() {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-function Checkbox({
-  checked,
-  onClick,
-}: {
-  checked: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={checked}
-      className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border transition ${
-        checked
-          ? "border-[#0e56c5] bg-[#0e56c5]"
-          : "border-[#e2e8f0] bg-white hover:border-[#0e56c5]"
-      }`}
-    >
-      {checked && (
-        <svg
-          viewBox="0 0 12 12"
-          className="h-2.5 w-2.5 text-white"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="m2 6 2.5 2.5L10 3" />
-        </svg>
-      )}
-    </button>
-  );
-}
-
-function DoctorsPage() {
   const [search, setSearch] = useState("");
-  const [selectedSpecialties, setSelectedSpecialties] = useState([
-    "General Physician",
-    "Cardiologist",
-  ]);
-  const [selectedExperiences, setSelectedExperiences] = useState(["10+ Years"]);
-  const [selectedGenders, setSelectedGenders] = useState(["Female Doctors"]);
-  const [sortBy, setSortBy] = useState("Popularity");
-  const [page, setPage] = useState(1);
+  const [selectedSpecialty, setSelectedSpecialty] = useState("All");
+  const [selectedExperience, setSelectedExperience] = useState("All");
+  const [selectedGender, setSelectedGender] = useState("All");
+  const [selectedAvailability, setSelectedAvailability] = useState("All");
+  const [maxFee, setMaxFee] = useState(2000);
+  const [sortBy, setSortBy] = useState("relevance");
 
-  function toggleSelection(
-    value: string,
-    setSelected: Dispatch<SetStateAction<string[]>>,
-  ) {
-    setSelected((current) =>
-      current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value],
-    );
-  }
-  function clearFilters() {
-    setSelectedSpecialties([]);
-    setSelectedExperiences([]);
-    setSelectedGenders([]);
-  }
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const visibleDoctors = doctors.filter((doctor) => {
-    const searchValue = search.trim().toLowerCase();
+  const doctorsPerPage = 6;
 
-    if (!searchValue) {
-      return true;
+  useEffect(() => {
+    async function fetchDoctors() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await getDoctors({
+          page: 1,
+          limit: 20,
+        });
+
+        setDoctors(response.data.items);
+      } catch (error) {
+        console.error("Failed to fetch doctors:", error);
+        setError("Failed to load doctors. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
 
-    return (
-      doctor.name.toLowerCase().includes(searchValue) ||
-      doctor.specialty.toLowerCase().includes(searchValue)
-    );
-  });
+    fetchDoctors();
+  }, []);
+
+  const doctorCards = useMemo(() => {
+    return doctors.map((doctor, index) => mapDoctorToCard(doctor, index));
+  }, [doctors]);
+
+  const specialties = useMemo(() => {
+    const values = doctorCards.map((doctor) => doctor.specialty);
+
+    return ["All", ...Array.from(new Set(values))];
+  }, [doctorCards]);
+
+  const filteredDoctors = useMemo(() => {
+    let result = [...doctorCards];
+
+    // Search
+    if (search.trim()) {
+      const query = search.toLowerCase();
+
+      result = result.filter((doctor) =>
+        [doctor.name, doctor.specialty, doctor.experience].some((value) =>
+          value.toLowerCase().includes(query),
+        ),
+      );
+    }
+
+    // Specialty
+    if (selectedSpecialty !== "All") {
+      result = result.filter(
+        (doctor) => doctor.specialty === selectedSpecialty,
+      );
+    }
+
+    // Experience
+    if (selectedExperience !== "All") {
+      result = result.filter((doctor) => {
+        const years = Number.parseInt(doctor.experience);
+
+        switch (selectedExperience) {
+          case "0-5":
+            return years <= 5;
+
+          case "5-10":
+            return years > 5 && years <= 10;
+
+          case "10+":
+            return years > 10;
+
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Fee
+    result = result.filter((doctor) => {
+      const fee = Number.parseInt(doctor.fee.replace(/[^\d]/g, ""));
+
+      return Number.isNaN(fee) || fee <= maxFee;
+    });
+
+    // Availability
+    if (selectedAvailability !== "All") {
+      result = result.filter(
+        (doctor) => doctor.availabilityType === selectedAvailability,
+      );
+    }
+
+    // Sorting
+    if (sortBy === "experience-high") {
+      result.sort((a, b) => {
+        const aYears = Number.parseInt(a.experience) || 0;
+        const bYears = Number.parseInt(b.experience) || 0;
+
+        return bYears - aYears;
+      });
+    }
+
+    if (sortBy === "experience-low") {
+      result.sort((a, b) => {
+        const aYears = Number.parseInt(a.experience) || 0;
+        const bYears = Number.parseInt(b.experience) || 0;
+
+        return aYears - bYears;
+      });
+    }
+
+    if (sortBy === "fee-low") {
+      result.sort((a, b) => {
+        const aFee = Number.parseInt(a.fee.replace(/[^\d]/g, "")) || 0;
+
+        const bFee = Number.parseInt(b.fee.replace(/[^\d]/g, "")) || 0;
+
+        return aFee - bFee;
+      });
+    }
+
+    if (sortBy === "fee-high") {
+      result.sort((a, b) => {
+        const aFee = Number.parseInt(a.fee.replace(/[^\d]/g, "")) || 0;
+
+        const bFee = Number.parseInt(b.fee.replace(/[^\d]/g, "")) || 0;
+
+        return bFee - aFee;
+      });
+    }
+
+    return result;
+  }, [
+    doctorCards,
+    search,
+    selectedSpecialty,
+    selectedExperience,
+    selectedAvailability,
+    maxFee,
+    sortBy,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredDoctors.length / doctorsPerPage),
+  );
+
+  const paginatedDoctors = filteredDoctors.slice(
+    (currentPage - 1) * doctorsPerPage,
+    currentPage * doctorsPerPage,
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    search,
+    selectedSpecialty,
+    selectedExperience,
+    selectedAvailability,
+    maxFee,
+    sortBy,
+  ]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedSpecialty("All");
+    setSelectedExperience("All");
+    setSelectedGender("All");
+    setSelectedAvailability("All");
+    setMaxFee(2000);
+    setSortBy("relevance");
+    setCurrentPage(1);
+  };
 
   return (
-    <div
-      data-node-id="25:29"
-      className="min-h-[calc(100vh-72px)] bg-[#f4f7fb] px-5 py-8 lg:px-8"
-    >
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-6">
-        {/* Header */}
-        <section className="flex items-center justify-between">
-          <div>
-            <h1 className="font-['Outfit'] text-2xl font-bold text-[#1e293b]">
-              Find Your Doctor
-            </h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold text-gray-900">Find a Doctor</h1>
 
-            <p className="mt-1 text-sm text-[#64748b]">
-              Book trusted appointments with top-rated medical experts
-            </p>
+          <p className="mt-2 text-gray-600">
+            Find the right doctor for your healthcare needs.
+          </p>
+
+          {/* Search */}
+          <div className="mt-6 flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search doctors or specialties..."
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="md:w-64">
+              <input
+                type="text"
+                value="Mumbai, India"
+                readOnly
+                className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-gray-600"
+              />
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div className="hidden items-center gap-2 rounded-full border border-[#e2e8f0] bg-white p-1.5 sm:flex">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f0fe] text-sm font-semibold text-[#0e56c5]">
-              R
-            </div>
-
-            <span className="pr-2 text-[13px] font-semibold text-[#1e293b]">
-              Rahul K.
-            </span>
-          </div>
-        </section>
-
-        {/* Search and filters */}
-        <section className="rounded-2xl border border-[#e2e8f0] bg-white p-4">
-          <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
-            <div>
-              <label className="mb-1 block text-[11px] font-semibold uppercase leading-tight text-[#64748b]">
-                Search Doctor, Symptoms or Health Condition
-              </label>
-
-              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-[#e2e8f0] bg-[#f4f7fb] px-3">
-                <SearchIcon />
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="e.g. Cardiologist, Sarah, Chest Pain..."
-                  className="min-w-0 flex-1 bg-transparent text-[13px] text-[#1e293b] outline-none placeholder:text-[#64748b]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-[11px] font-semibold uppercase text-[#64748b]">
-                Specialty
-              </label>
-
-              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-3">
-                <FilterIcon src={stethoscopeIcon} />
-
-                <span className="flex-1 text-[13px] font-medium text-[#1e293b]">
-                  All Specialties
-                </span>
-
-                <span className="text-xs text-[#64748b]">⌄</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-[11px] font-semibold uppercase text-[#64748b]">
-                Location
-              </label>
-
-              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-3">
-                <FilterIcon src={mapPinIcon} />
-
-                <span className="flex-1 truncate text-[13px] font-medium text-[#1e293b]">
-                  New Delhi, India
-                </span>
-
-                <span className="text-xs text-[#64748b]">⌄</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-[11px] font-semibold uppercase text-[#64748b]">
-                Availability
-              </label>
-
-              <div className="flex h-[38px] items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-3">
-                <FilterIcon src={calendarIcon} />
-
-                <span className="flex-1 text-[13px] font-medium text-[#1e293b]">
-                  Any Day
-                </span>
-
-                <span className="text-xs text-[#64748b]">⌄</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="h-[38px] self-end rounded-lg bg-[#0e56c5] px-6 text-[13px] font-semibold text-white transition hover:bg-[#0b49a8]"
-            >
-              Search
-            </button>
-          </div>
-        </section>
-
-        {/* Main workspace */}
-        <section className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filters */}
-          <aside className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
+          <aside className="bg-white rounded-2xl border p-6 h-fit">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-[#1e293b]">
-                Filters
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
 
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-xs font-semibold text-[#0e56c5] hover:underline"
+                className="text-sm text-blue-600 hover:text-blue-700"
               >
-                Clear All
+                Clear
               </button>
             </div>
 
-            <div className="my-5 border-t border-[#e2e8f0]" />
-
-            <div>
-              <h3 className="text-[13px] font-semibold uppercase text-[#1e293b]">
+            {/* Specialty */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Specialty
-              </h3>
+              </label>
 
-              <div className="mt-3 space-y-3">
+              <select
+                value={selectedSpecialty}
+                onChange={(event) => setSelectedSpecialty(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              >
                 {specialties.map((specialty) => (
-                  <label
-                    key={specialty}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <Checkbox
-                      checked={selectedSpecialties.includes(specialty)}
-                      onClick={() =>
-                        toggleSelection(specialty, setSelectedSpecialties)
-                      }
-                    />
-
-                    <span className="text-[13px] text-[#1e293b]">
-                      {specialty}
-                    </span>
-                  </label>
+                  <option key={specialty} value={specialty}>
+                    {specialty}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
 
-            <div className="my-5 border-t border-[#e2e8f0]" />
-
-            <div>
-              <h3 className="text-[13px] font-semibold uppercase text-[#1e293b]">
+            {/* Experience */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Experience
-              </h3>
+              </label>
 
-              <div className="mt-3 space-y-3">
-                {experiences.map((experience) => (
-                  <label
-                    key={experience}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <Checkbox
-                      checked={selectedExperiences.includes(experience)}
-                      onClick={() =>
-                        toggleSelection(experience, setSelectedExperiences)
-                      }
-                    />
-
-                    <span className="text-[13px] text-[#1e293b]">
-                      {experience}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <select
+                value={selectedExperience}
+                onChange={(event) => setSelectedExperience(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              >
+                <option value="All">Any experience</option>
+                <option value="0-5">0 - 5 Years</option>
+                <option value="5-10">5 - 10 Years</option>
+                <option value="10+">10+ Years</option>
+              </select>
             </div>
 
-            <div className="my-5 border-t border-[#e2e8f0]" />
-
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold uppercase text-[#1e293b]">
-                  Consultation Fee
-                </h3>
-
-                <span className="text-xs font-semibold text-[#0e56c5]">
-                  ₹300 - ₹1000
-                </span>
-              </div>
-
-              <div className="relative mt-5 h-5">
-                <div className="absolute left-0 right-0 top-2 h-1 rounded-full bg-[#e2e8f0]" />
-
-                <div className="absolute left-[15%] right-[15%] top-2 h-1 rounded-full bg-[#0e56c5]" />
-
-                <div className="absolute left-[12%] top-0 h-5 w-5 rounded-full border-2 border-[#0e56c5] bg-white" />
-
-                <div className="absolute right-[12%] top-0 h-5 w-5 rounded-full border-2 border-[#0e56c5] bg-white" />
-              </div>
-            </div>
-
-            <div className="my-5 border-t border-[#e2e8f0]" />
-
-            <div>
-              <h3 className="text-[13px] font-semibold uppercase text-[#1e293b]">
+            {/* Gender */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Gender
-              </h3>
+              </label>
 
-              <div className="mt-3 space-y-3">
-                {genders.map((gender) => (
-                  <label
-                    key={gender}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <Checkbox
-                      checked={selectedGenders.includes(gender)}
-                      onClick={() =>
-                        toggleSelection(gender, setSelectedGenders)
-                      }
-                    />
+              <select
+                value={selectedGender}
+                onChange={(event) => setSelectedGender(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              >
+                <option value="All">Any gender</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
 
-                    <span className="text-[13px] text-[#1e293b]">{gender}</span>
-                  </label>
-                ))}
+              <p className="mt-2 text-xs text-gray-500">
+                Gender filtering will be connected when gender is available in
+                the doctor profile data.
+              </p>
+            </div>
+
+            {/* Availability */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Availability
+              </label>
+
+              <select
+                value={selectedAvailability}
+                onChange={(event) =>
+                  setSelectedAvailability(event.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              >
+                <option value="All">Any availability</option>
+                <option value="today">Available Today</option>
+                <option value="later">Available Later</option>
+              </select>
+            </div>
+
+            {/* Fee */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Consultation Fee
+                </label>
+
+                <span className="text-sm text-gray-600">₹{maxFee}</span>
               </div>
+
+              <input
+                type="range"
+                min="500"
+                max="2000"
+                step="50"
+                value={maxFee}
+                onChange={(event) => setMaxFee(Number(event.target.value))}
+                className="w-full"
+              />
             </div>
           </aside>
 
           {/* Results */}
-          <div className="min-w-0">
-            <div className="mb-5 flex items-center justify-between">
-              <p className="text-sm text-[#64748b]">
-                Showing{" "}
-                <span className="font-bold text-[#1e293b]">
-                  {visibleDoctors.length * 24} Doctors
-                </span>{" "}
-                in New Delhi
-              </p>
+          <main className="lg:col-span-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Doctors</h2>
 
-              <label className="flex items-center gap-1 text-[13px] text-[#64748b]">
-                Sort By:
-                <select
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                  className="cursor-pointer border-none bg-transparent font-semibold text-[#0e56c5] outline-none"
-                >
-                  <option>Popularity</option>
-                  <option>Rating</option>
-                  <option>Experience</option>
-                  <option>Fee: Low to High</option>
-                </select>
-              </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  {loading
+                    ? "Loading doctors..."
+                    : `${filteredDoctors.length} doctors found`}
+                </p>
+              </div>
+
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 bg-white"
+              >
+                <option value="relevance">Sort by relevance</option>
+                <option value="experience-high">Experience: High to Low</option>
+                <option value="experience-low">Experience: Low to High</option>
+                <option value="fee-low">Fee: Low to High</option>
+                <option value="fee-high">Fee: High to Low</option>
+              </select>
             </div>
 
-            <div className="grid gap-5 xl:grid-cols-2">
-              {visibleDoctors.map((doctor) => (
-                <article
-                  key={doctor.name}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_4px_8px_rgba(14,86,197,0.04)]"
+            {/* Loading */}
+            {loading && (
+              <div className="bg-white rounded-2xl border p-12 text-center">
+                <p className="text-gray-600">Loading doctors...</p>
+              </div>
+            )}
+
+            {/* Error */}
+            {!loading && error && (
+              <div className="bg-white rounded-2xl border p-12 text-center">
+                <p className="text-red-600">{error}</p>
+
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                 >
-                  <div className="p-4">
-                    <div className="flex items-center gap-3">
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Empty */}
+            {!loading && !error && paginatedDoctors.length === 0 && (
+              <div className="bg-white rounded-2xl border p-12 text-center">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  No doctors found
+                </h3>
+
+                <p className="mt-2 text-gray-500">
+                  Try changing your search or filters.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-4 text-blue-600 hover:text-blue-700"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
+            {/* Doctor cards */}
+            {!loading && !error && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {paginatedDoctors.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="bg-white rounded-2xl border p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex gap-4">
+                      {/* Avatar */}
                       <img
                         src={doctor.avatar}
-                        alt=""
-                        className="h-16 w-16 shrink-0 rounded-full object-cover"
+                        alt={doctor.name}
+                        className="w-20 h-20 rounded-xl object-cover bg-gray-100"
                       />
 
-                      <div className="min-w-0">
+                      {/* Basic info */}
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/doctors/${doctor.id}`}
+                          className="text-lg font-semibold text-gray-900 hover:text-blue-600"
+                        >
+                          {doctor.name}
+                        </Link>
+
+                        <p className="mt-1 text-blue-600 font-medium">
+                          {doctor.specialty}
+                        </p>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          {doctor.experience}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="mt-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">
+                          Consultation
+                        </span>
+
+                        <span className="font-semibold text-gray-900">
+                          {doctor.fee}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">Rating</span>
+
+                        <span className="text-sm text-gray-700">
+                          {doctor.rating}{" "}
+                          {doctor.reviews !== "No reviews" &&
+                            `(${doctor.reviews})`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">
+                          Availability
+                        </span>
+
                         <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                          className={`text-sm font-medium ${
                             doctor.availabilityType === "today"
-                              ? "bg-[#e6f7f0] text-[#10b981]"
-                              : "bg-[#e8f0fe] text-[#0e56c5]"
+                              ? "text-green-600"
+                              : "text-gray-600"
                           }`}
                         >
                           {doctor.availability}
                         </span>
-
-                        <h3 className="mt-1 truncate text-base font-semibold text-[#1e293b]">
-                          {doctor.name}
-                        </h3>
-
-                        <p className="text-[13px] font-medium text-[#0e56c5]">
-                          {doctor.specialty}
-                        </p>
                       </div>
                     </div>
 
-                    <div className="my-3 border-t border-[#e2e8f0]" />
+                    {/* Actions */}
+                    <div className="mt-6 flex gap-3">
+                      <Link
+                        to={`/doctors/${doctor.id}`}
+                        className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        View Profile
+                      </Link>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <p className="text-[11px] text-[#64748b]">Experience</p>
-
-                        <p className="mt-0.5 text-[13px] font-semibold text-[#1e293b]">
-                          {doctor.experience}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[11px] text-[#64748b]">
-                          Consultation Fee
-                        </p>
-
-                        <p className="mt-0.5 text-[13px] font-semibold text-[#1e293b]">
-                          {doctor.fee}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[11px] text-[#64748b]">Rating</p>
-
-                        <div className="mt-0.5 flex items-center gap-1">
-                          <img src={starIcon} alt="" className="h-3 w-3" />
-
-                          <span className="text-[13px] font-semibold text-[#1e293b]">
-                            {doctor.rating}
-                          </span>
-
-                          <span className="text-[11px] text-[#64748b]">
-                            ({doctor.reviews})
-                          </span>
-                        </div>
-                      </div>
+                      <Link
+                        to={`/doctors/${doctor.id}`}
+                        className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700"
+                      >
+                        Book Appointment
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="border-t border-[#e2e8f0] bg-[#f4f7fb] p-3">
-                    <button
-                      type="button"
-                      className="w-full rounded-lg bg-[#0e56c5] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0b49a8]"
-                    >
-                      Book Appointment
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
-            <div className="mt-8 flex items-center justify-between">
-              <p className="text-[13px] text-[#64748b]">Page {page} of 12</p>
-
-              <div className="flex items-center gap-2">
+            {!loading && !error && filteredDoctors.length > 0 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
                 <button
                   type="button"
-                  disabled={page === 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  className="flex h-8 w-8 items-center justify-center rounded-md border border-[#e2e8f0] bg-white text-[#64748b] transition hover:border-[#0e56c5] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm disabled:opacity-40"
                 >
-                  ‹
+                  Previous
                 </button>
 
-                {[1, 2, 3].map((number) => (
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1,
+                ).map((page) => (
                   <button
-                    key={number}
+                    key={page}
                     type="button"
-                    onClick={() => setPage(number)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-md border text-[13px] font-medium transition ${
-                      page === number
-                        ? "border-[#0e56c5] bg-[#0e56c5] text-white"
-                        : "border-[#e2e8f0] bg-white text-[#1e293b] hover:border-[#0e56c5]"
+                    onClick={() => setCurrentPage(page)}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "border border-gray-300 bg-white text-gray-700"
                     }`}
                   >
-                    {number}
+                    {page}
                   </button>
                 ))}
 
                 <button
                   type="button"
+                  disabled={currentPage === totalPages}
                   onClick={() =>
-                    setPage((current) => Math.min(12, current + 1))
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
                   }
-                  className="flex h-8 w-8 items-center justify-center rounded-md border border-[#e2e8f0] bg-white text-[#64748b] transition hover:border-[#0e56c5]"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm disabled:opacity-40"
                 >
-                  ›
+                  Next
                 </button>
               </div>
-            </div>
-          </div>
-        </section>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
 }
-
-export default DoctorsPage;

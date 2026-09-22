@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "seed:articles": "tsx prisma/seed/dev/articles.ts"
+    "seed:articles": "tsx prisma/seed/dev/articles.ts",
+    "seed:doctors": "tsx prisma/seed/dev/doctors.ts"
   },
   "keywords": [],
   "author": "",

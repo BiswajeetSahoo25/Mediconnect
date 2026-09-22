@@ -26,6 +26,7 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import DoctorProfilePage from "./pages/DoctorProfilePage";
 import FAQPage from "./pages/FAQPage";
+import HelpPage from "./pages/HelpPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
@@ -55,6 +56,7 @@ function App() {
                 element={<HealthcareDetailsPage />}
               />
               <Route path="/faq" element={<FAQPage />} />
+              <Route path="/help" element={<HelpPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/medicines" element={<MedicinesPage />} />
               <Route

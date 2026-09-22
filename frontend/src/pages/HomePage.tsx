@@ -93,9 +93,9 @@ const hospitalIcon =
   "https://www.figma.com/api/mcp/asset/71c571f0-a428-4212-aa50-e539fa7ea9e9.svg";
 
 const doctorAvatars = [
-  "https://www.figma.com/api/mcp/asset/f93f1de8-28ab-4d61-b6e6-ef34ed3115e3.png",
-  "https://www.figma.com/api/mcp/asset/7c9a58a8-681a-45a8-bc51-06614aba1528.png",
-  "https://www.figma.com/api/mcp/asset/40bcaa28-03a6-47b5-ba80-0045f2a38d03.png",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWH51TBkIysPOb_mRJrwQ3pBtYu3JZvGTxQ4Q9-eHhPyRuhShDyZRsUZf8&s=10",
 ];
 
 const specialties = [
