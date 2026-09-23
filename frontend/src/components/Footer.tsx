@@ -4,10 +4,10 @@ import {
   facebookIcon,
   instagramIcon,
   linkedinIcon,
+  mediLogo,
 } from "../assets/icons";
 
-const plusIcon =
-  "https://www.figma.com/api/mcp/asset/8e430334-e5e0-4380-ac34-d752a75fffb8.svg";
+const plusIcon = mediLogo;
 
 const patientLinks = [
   { label: "Search Doctors", to: "/doctors" },
@@ -21,15 +21,15 @@ const doctorLinks = [
   { label: "Join Medico", to: "/apply-as-doctor" },
   { label: "Provider Login", to: "/login" },
   { label: "Consulting Dashboard", to: "/doctor-dashboard" },
-  { label: "Provider Resources", to: "#" },
-  { label: "Clinics Hub", to: "#" },
+  // { label: "Provider Resources", to: "#" },
+  // { label: "Clinics Hub", to: "#" },
 ];
 
 const aboutLinks = [
   { label: "About Medico", to: "/about" },
-  { label: "Careers", to: "#" },
-  { label: "Press Releases", to: "#" },
-  { label: "Sitemap", to: "#" },
+  // { label: "Careers", to: "#" },
+  // { label: "Press Releases", to: "#" },
+  // { label: "Sitemap", to: "#" },
   { label: "Contact Us", to: "/contact" },
 ];
 
@@ -37,8 +37,8 @@ const legalLinks = [
   { label: "FAQs", to: "/faq" },
   { label: "Privacy Policy", to: "/privacy" },
   { label: "Terms of Service", to: "/terms" },
-  { label: "IP Policy", to: "#" },
-  { label: "Grievance Redressal", to: "#" },
+  // { label: "IP Policy", to: "#" },
+  // { label: "Grievance Redressal", to: "#" },
 ];
 
 function FooterColumn({

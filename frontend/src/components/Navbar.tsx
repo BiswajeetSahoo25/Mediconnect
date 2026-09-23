@@ -2,12 +2,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useUserLocation } from "../hooks/useUserLocation";
 import { mapPinIcon } from "../assets/icons";
+import { mediLogo } from "../assets/icons";
 
-const plusIcon =
-  "https://www.figma.com/api/mcp/asset/8c977e73-c7a2-4348-8ad7-9bceb027f1a7.svg";
-
-const chevronDownIcon =
-  "https://www.figma.com/api/mcp/asset/002d0b1d-9d6d-48b9-8e76-9d88d2e8629f.svg";
+const plusIcon = mediLogo;
 
 function Navbar() {
   const { isAuthenticated, user } = useAuth();
@@ -44,12 +41,6 @@ function Navbar() {
             <span className="whitespace-nowrap font-['DM_Sans'] text-[13px] font-semibold leading-none text-[#1a73e8]">
               {locationText}
             </span>
-
-            <img
-              src={chevronDownIcon}
-              alt=""
-              className="ml-0.5 h-3.5 w-3.5 shrink-0"
-            />
           </div>
         </div>
 

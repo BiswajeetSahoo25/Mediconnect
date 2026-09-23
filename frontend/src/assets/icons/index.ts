@@ -4,8 +4,9 @@ import facebookIcon from "./facebook-social-svgrepo-com.svg";
 import instagramIcon from "./instagram-svgrepo-com.svg";
 import linkedinIcon from "./linkedin-svgrepo-com.svg";
 import search from "./icons8-search.svg";
-import settingsIcon from "./icons8-settings.svg"
-import dashboardIcon from "./dashboard-svgrepo-com.svg"
+import settingsIcon from "./icons8-settings.svg";
+import dashboardIcon from "./dashboard-svgrepo-com.svg";
+import mediLogo from "./icon-container.svg";
 
 export {
   mapPinIcon,
@@ -15,5 +16,6 @@ export {
   linkedinIcon,
   search,
   settingsIcon,
-  dashboardIcon
+  dashboardIcon,
+  mediLogo,
 };

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getArticles } from "../features/articles";
 import type { ArticlePreview } from "../features/articles";
 import { search } from "../assets/icons";
+import * as homeIcons from "../assets/homePageIcons";
 
 const heroImage =
   "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
@@ -12,23 +13,12 @@ const healthcareImage =
 
 const searchIcon = search;
 
-const ambulanceIcon =
-  "https://www.figma.com/api/mcp/asset/d1c2277f-14b4-4a61-9cac-01f3d57c8971.svg";
-
-const videoIcon =
-  "https://www.figma.com/api/mcp/asset/813d4a64-315d-4543-926e-7feb7b4b89ac.svg";
-
-const testIcon =
-  "https://www.figma.com/api/mcp/asset/7bb64f44-93a6-4809-ad89-0d5c25d5dce8.svg";
-
-const pillIcon =
-  "https://www.figma.com/api/mcp/asset/570da8f2-a1ad-46d8-9481-fdfe208044a0.svg";
-
-const heartIcon =
-  "https://www.figma.com/api/mcp/asset/62f578d3-5b28-470c-98f2-7c33be852863.svg";
-
-const arrowIcon =
-  "https://www.figma.com/api/mcp/asset/08ac0833-a06e-497e-930e-bcf9c542df14.svg";
+const ambulanceIcon = homeIcons.ambulanceIconSvg;
+const videoIcon = homeIcons.videoIconSvg;
+const testIcon = homeIcons.testIconSvg;
+const pillIcon = homeIcons.pillIconSvg;
+const heartIcon = homeIcons.heartIconSvg;
+const arrowRightIcon = homeIcons.arrowRightSvg;
 
 const quickActions = [
   {
@@ -291,7 +281,7 @@ function HomePage() {
                 <span>{action.action}</span>
 
                 <img
-                  src={arrowIcon}
+                  src={arrowRightIcon}
                   alt=""
                   className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
                 />
@@ -302,7 +292,7 @@ function HomePage() {
       </section>
 
       {/* Popular Specialties */}
-      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
+      {/* <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="font-['Outfit'] text-2xl font-bold">
             Popular Specialties
@@ -333,7 +323,7 @@ function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Recommended Doctors */}
       <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
