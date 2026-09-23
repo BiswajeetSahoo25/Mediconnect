@@ -4,17 +4,17 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { notFoundMiddleware } from "./middleware/not-found.middleware.js";
-import userRouter from "./routes/user.routes.js";
-import authRouter from "./routes/auth.routes.js";
-import patientRouter from "./routes/patient.routes.js";
-import emergencyContactRouter from "./routes/patient-emergency-contact.routes.js";
-import userAddressRouter from "./routes/user-address.routes.js";
-import doctorRouter from "./routes/doctor.routes.js";
-import specializationRouter from "./routes/specialization.routes.js";
-import appointmentRouter from "./routes/appointment.routes.js";
-import articleRouter from "./routes/article.routes.js";
-import facilityRouter from "./routes/facility.routes.js";
-import medicineRouter from "./routes/medicine.routes.js";
+import userRouter from "./modules/users/user.routes.js";
+import authRouter from "./modules/auth/auth.routes.js";
+import patientRouter from "./modules/patients/patient.routes.js";
+import emergencyContactRouter from "./modules/patients/patient-emergency-contact.routes.js";
+import userAddressRouter from "./modules/users/user-address.routes.js";
+import doctorRouter from "./modules/doctors/doctor.routes.js";
+import specializationRouter from "./modules/doctors/specialization.routes.js";
+import appointmentRouter from "./modules/appointments/appointment.routes.js";
+import articleRouter from "./modules/articles/article.routes.js";
+import facilityRouter from "./modules/facilities/facility.routes.js";
+import medicineRouter from "./modules/medicines/medicine.routes.js";
 
 const app = express();
 

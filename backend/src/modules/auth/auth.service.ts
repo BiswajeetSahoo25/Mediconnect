@@ -1,0 +1,152 @@
+import argon2 from "argon2";
+import type { User } from "../../generated/prisma/client.js";
+
+import { env } from "../../config/env.js";
+import { UnauthorizedError } from "../../errors/http-errors.js";
+import { UserRepository } from "../users/user.repository.js";
+import { RefreshTokenRepository } from "./refresh-token.repository.js";
+import { generateAccessToken } from "./access-token.js";
+import {
+  generateRefreshToken,
+  hashRefreshToken,
+} from "./refresh-token.js";
+import { toUserResponse } from "../users/user.mapper.js";
+import type { CreateUserInput } from "../users/user.validation.js";
+
+export class AuthService {
+  private readonly userRepository: UserRepository;
+  private readonly refreshTokenRepository: RefreshTokenRepository;
+
+  constructor() {
+    this.userRepository = new UserRepository();
+    this.refreshTokenRepository = new RefreshTokenRepository();
+  }
+
+  async signup(data: CreateUserInput) {
+    const passwordHash = await argon2.hash(data.password);
+    const user = await this.userRepository.create({
+      email: data.email,
+      passwordHash,
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+    });
+
+    return this.createSession(user);
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+
+    const isPasswordValid = await argon2.verify(user.passwordHash, password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedError();
+    }
+
+    return this.createSession(user);
+  }
+
+  private async createSession(user: User) {
+    await this.userRepository.updateLastLogin(user.id);
+
+    const accessToken = await generateAccessToken(user.id, user.role);
+
+    const refreshToken = generateRefreshToken();
+
+    const tokenHash = hashRefreshToken(refreshToken);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + env.refreshTokenExpiresInDays);
+
+    await this.refreshTokenRepository.create({
+      tokenHash,
+      expiresAt,
+
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
+    });
+
+    return {
+      user: toUserResponse(user),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refresh(refreshToken: string) {
+    const tokenHash = hashRefreshToken(refreshToken);
+
+    const storedToken =
+      await this.refreshTokenRepository.findByTokenHash(tokenHash);
+
+    if (
+      !storedToken ||
+      storedToken.revokedAt !== null ||
+      storedToken.expiresAt <= new Date()
+    ) {
+      throw new UnauthorizedError();
+    }
+
+    const user = await this.userRepository.findById(storedToken.userId);
+
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+
+    await this.refreshTokenRepository.revoke(storedToken.id);
+
+    const newRefreshToken = generateRefreshToken();
+
+    const newTokenHash = hashRefreshToken(newRefreshToken);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + env.refreshTokenExpiresInDays);
+
+    await this.refreshTokenRepository.create({
+      tokenHash: newTokenHash,
+      expiresAt,
+      user: {
+        connect: {
+          id: user.id,
+        },
+      },
+    });
+
+    const accessToken = await generateAccessToken(user.id, user.role);
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+      user: toUserResponse(user),
+    };
+  }
+
+  async logout(refreshToken: string) {
+    const tokenHash = hashRefreshToken(refreshToken);
+
+    const storedToken =
+      await this.refreshTokenRepository.findByTokenHash(tokenHash);
+
+    if (!storedToken || storedToken.revokedAt !== null) {
+      return;
+    }
+
+    await this.refreshTokenRepository.revoke(storedToken.id);
+  }
+
+  async me(userId: string) {
+    const user = await this.userRepository.findById(userId);
+
+    if(!user) {
+      throw new UnauthorizedError();
+    }
+
+    return toUserResponse(user);
+  }
+}

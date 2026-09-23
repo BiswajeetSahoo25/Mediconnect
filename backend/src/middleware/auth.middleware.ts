@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 
 import { UnauthorizedError } from "../errors/http-errors.js";
-import { verifyAccessToken } from "../auth/utils/access-token.js";
+import { verifyAccessToken } from "../modules/auth/access-token.js";
 
 export async function requireAuth(
   req: Request,
