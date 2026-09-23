@@ -1,17 +1,12 @@
-import medicine1 from "../../assets/images/medicines/medicine-1.svg?url";
-import medicine2 from "../../assets/images/medicines/medicine-2.svg?url";
-import medicine3 from "../../assets/images/medicines/medicine-3.svg?url";
-import medicine4 from "../../assets/images/medicines/medicine-4.svg?url";
-import medicine5 from "../../assets/images/medicines/medicine-5.svg?url";
-import medicine6 from "../../assets/images/medicines/medicine-6.svg?url";
+import * as medicine from "../../assets/images/medicines";
 
 const MEDICINE_IMAGES = [
-  medicine1,
-  medicine2,
-  medicine3,
-  medicine4,
-  medicine5,
-  medicine6,
+  medicine.medicine_1,
+  medicine.medicine_2,
+  medicine.medicine_3,
+  medicine.medicine_4,
+  medicine.medicine_5,
+  medicine.medicine_6,
 ];
 
 /**
@@ -21,7 +16,7 @@ const MEDICINE_IMAGES = [
  */
 export function getMedicineImage(medicineName?: string | null): string {
   if (!medicineName) {
-    return medicine1;
+    return medicine.medicine_1;
   }
 
   const normalized = medicineName.toLowerCase().trim();
