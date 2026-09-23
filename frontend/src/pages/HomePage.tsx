@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getArticles } from "../services/article.service";
-import type { ArticlePreview } from "../types/article";
+import { getArticles } from "../features/articles";
+import type { ArticlePreview } from "../features/articles";
 import { search } from "../assets/icons";
 
 const heroImage =

@@ -15,21 +15,21 @@ import {
   getPatient,
   updatePatient,
   type Patient,
-} from "../services/patient.service";
+} from "../features/patients";
 
 import {
   getAddresses,
   createAddress,
   updateAddress,
   deleteAddress,
-} from "../services/user-address.service";
+} from "../features/patients";
 
 import {
   getEmergencyContacts,
   createEmergencyContact,
   updateEmergencyContact,
   deleteEmergencyContact,
-} from "../services/emergency-contact.service";
+} from "../features/patients";
 
 import {
   accountSettingsSchema,
