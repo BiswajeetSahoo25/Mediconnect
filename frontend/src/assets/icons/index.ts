@@ -7,6 +7,7 @@ import search from "./icons8-search.svg";
 import settingsIcon from "./icons8-settings.svg";
 import dashboardIcon from "./dashboard-svgrepo-com.svg";
 import mediLogo from "./icon-container.svg";
+import defaultAvatar from "./icons8-user-100.png"
 
 export {
   mapPinIcon,
@@ -18,4 +19,5 @@ export {
   settingsIcon,
   dashboardIcon,
   mediLogo,
+  defaultAvatar
 };
