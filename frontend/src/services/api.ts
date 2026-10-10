@@ -187,7 +187,7 @@ export async function createDoctorApplication(data: {
   about?: string;
 }) {
   try {
-    const response = await api.post("/doctor-applications", data);
+    const response = await api.post("/doctors/apply", data);
 
     return response.data;
   } catch (error) {

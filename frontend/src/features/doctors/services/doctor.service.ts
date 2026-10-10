@@ -71,3 +71,24 @@ export async function getDoctorAvailability(
 
   return response.data;
 }
+
+
+export async function getMyDoctorProfile() {
+  const response = await api.get<{
+    status: "success";
+    data: {
+      id: string;
+      firstName: string;
+      lastName: string | null;
+      licenseNumber: string;
+      licenseAuthority: string | null;
+      licenseVerificationStatus: string;
+      yearsOfExperience: number | null;
+      about: string | null;
+      isActive: boolean;
+    };
+  }>("/doctors/me");
+
+  return response.data;
+}
+

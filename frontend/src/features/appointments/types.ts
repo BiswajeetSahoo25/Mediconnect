@@ -1,4 +1,4 @@
-import type { DoctorFacility } from "../doctors/types";
+// import type { DoctorFacility } from "../doctors/types";
 
 /**
  * Mirrors the Prisma `AppointmentStatus` enum.
@@ -145,18 +145,18 @@ export interface AppointmentAvailabilityResponse {
 /**
  * Booking draft handed over from the doctor profile page.
  */
+
 export interface BookingDoctorContext {
   doctorId: string;
   doctorName: string;
   specialization: string | null;
-  facilities: Pick<
-    DoctorFacility,
-    | "id"
-    | "facilityName"
-    | "facilityType"
-    | "departmentName"
-    | "consultationFee"
-    | "consultationMode"
-    | "onlineBookingEnabled"
-  >[];
+  facilities: {
+    id: string;
+    facilityName: string;
+    facilityType: string;
+    departmentName: string;
+    consultationFee: string;
+    consultationMode: string;
+    onlineBookingEnabled: boolean;
+  }[];
 }

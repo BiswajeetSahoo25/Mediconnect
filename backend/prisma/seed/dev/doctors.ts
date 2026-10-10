@@ -45,7 +45,10 @@ const departmentNames = [
   "Pulmonology",
 ];
 
-async function findOrCreateFacility(facilityData: (typeof facilities)[number]) {
+async function findOrCreateFacility(
+  facilityData: (typeof facilities)[number],
+  adminId: string,
+) {
   const existing = await prisma.healthcareFacility.findFirst({
     where: {
       name: facilityData.name,
@@ -54,19 +57,32 @@ async function findOrCreateFacility(facilityData: (typeof facilities)[number]) {
   });
 
   if (existing) {
-    return existing;
+    return prisma.healthcareFacility.update({
+      where: {
+        id: existing.id,
+      },
+      data: {
+        isVerified: true,
+        verifiedAt: new Date(),
+        verifiedBy: adminId,
+      },
+    });
   }
-
   return prisma.healthcareFacility.create({
-    data: facilityData,
+    data: {
+      ...facilityData,
+      isVerified: true,
+      verifiedAt: new Date(),
+      verifiedBy: adminId,
+    },
   });
 }
 
-async function seedFacilities() {
+async function seedFacilities(adminId: string) {
   const seededFacilities = [];
 
   for (const facilityData of facilities) {
-    const facility = await findOrCreateFacility(facilityData);
+    const facility = await findOrCreateFacility(facilityData, adminId);
 
     seededFacilities.push(facility);
 
@@ -381,7 +397,7 @@ async function seedDoctors() {
    * --------------------------------------------------
    */
 
-  const seededFacilities = await seedFacilities();
+  const seededFacilities = await seedFacilities(admin.id);
 
   /*
    * --------------------------------------------------

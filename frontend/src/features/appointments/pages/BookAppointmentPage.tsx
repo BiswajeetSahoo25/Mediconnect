@@ -64,15 +64,17 @@ function toDoctorContext(doctor: Doctor): BookingDoctorContext {
     doctor.specializations.find((specialization) => specialization.isPrimary) ??
     doctor.specializations[0];
 
+  console.log("Doctor facilities:", doctor.facilities);
   return {
     doctorId: doctor.id,
     doctorName: `Dr. ${doctor.firstName}${doctor.lastName ? ` ${doctor.lastName}` : ""}`,
-    specialization: primarySpecialization?.name ?? null,
+    specialization: primarySpecialization?.specialization?.name ?? null,
+
     facilities: doctor.facilities.map((facility) => ({
       id: facility.id,
-      facilityName: facility.facilityName,
-      facilityType: facility.facilityType,
-      departmentName: facility.departmentName,
+      facilityName: facility.facility.name,
+      facilityType: "Healthcare facility",
+      departmentName: facility.department.name,
       consultationFee: facility.consultationFee,
       consultationMode: facility.consultationMode,
       onlineBookingEnabled: facility.onlineBookingEnabled,

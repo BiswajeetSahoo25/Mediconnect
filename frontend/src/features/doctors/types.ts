@@ -23,10 +23,15 @@ export interface DoctorAvailability {
 export interface DoctorFacility {
   id: string;
   facilityId: string;
-  facilityName: string;
-  facilityType: string;
+  facility: {
+    id: string;
+    name: string;
+  };
   departmentId: string;
-  departmentName: string;
+  department: {
+    id: string;
+    name: string;
+  };
   consultationFee: string;
   consultationMode: string;
   onlineBookingEnabled: boolean;
