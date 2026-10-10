@@ -31,8 +31,9 @@ const doctorAvatars = [
 
 function mapDoctorToCard(doctor: Doctor, index: number): DoctorCard {
   const primarySpecialization =
-    doctor.specializations.find((specialization) => specialization.isPrimary) ??
+    doctor.specializations.find((specialization) => specialization.name) ??
     doctor.specializations[0];
+
 
   const primaryFacility = doctor.facilities[0];
 
@@ -43,7 +44,7 @@ function mapDoctorToCard(doctor: Doctor, index: number): DoctorCard {
       doctor.lastName ? ` ${doctor.lastName}` : ""
     }`,
 
-    specialty: primarySpecialization?.name ?? "General Physician",
+    specialty: primarySpecialization?.specialization?.name ?? "General Physician",
 
     experience: doctor.yearsOfExperience
       ? `${doctor.yearsOfExperience} Years`
@@ -119,7 +120,9 @@ export default function DoctorsPage() {
         page: currentPage,
         limit: PAGE_SIZE,
         ...(search.trim() ? { search: search.trim() } : {}),
-        ...(selectedSpecializationId ? { specializationId: selectedSpecializationId } : {}),
+        ...(selectedSpecializationId
+          ? { specializationId: selectedSpecializationId }
+          : {}),
       });
 
       setDoctors(response.data.items);
@@ -235,9 +238,8 @@ export default function DoctorsPage() {
             </div>
 
             <p className="mt-6 text-xs text-gray-500">
-              Experience, gender, availability and fee filters are not
-              currently supported by the doctor search API and have been
-              removed.
+              Experience, gender, availability and fee filters are not currently
+              supported by the doctor search API and have been removed.
             </p>
           </aside>
 
@@ -407,22 +409,23 @@ export default function DoctorsPage() {
                   Previous
                 </button>
 
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => setCurrentPage(page)}
-                      className={`rounded-lg px-4 py-2 text-sm ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-300 bg-white text-gray-700"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1,
+                ).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "border border-gray-300 bg-white text-gray-700"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
 
                 <button
                   type="button"

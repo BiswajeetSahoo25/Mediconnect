@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import {
-  createAppointment,
-  getAppointmentAvailability,
-} from "../index";
+import { createAppointment, getAppointmentAvailability } from "../index";
 import { getDoctorById } from "../../doctors";
 import { ApiError } from "../../../services/api";
 import {
@@ -30,10 +27,15 @@ const DAY_NAMES = [
 ];
 
 function formatDateLabel(dateKey: string) {
-  // Parse as UTC noon so the label never shifts a day in timezones ahead of UTC.
-  const [year, month, day] = dateKey.split("-").map(Number);
+  // Supports both YYYY-MM-DD and ISO timestamps.
+  const datePart = dateKey.slice(0, 10);
+  const [year, month, day] = datePart.split("-").map(Number);
 
-  return new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1, 12)).toLocaleDateString(
+  if (!year || !month || !day) {
+    return "Invalid date";
+  }
+
+  return new Date(Date.UTC(year, month - 1, day, 12)).toLocaleDateString(
     "en-IN",
     {
       weekday: "short",
@@ -59,9 +61,8 @@ function formatWindowLabel(startTime: string, endTime: string) {
 
 function toDoctorContext(doctor: Doctor): BookingDoctorContext {
   const primarySpecialization =
-    doctor.specializations.find(
-      (specialization) => specialization.isPrimary,
-    ) ?? doctor.specializations[0];
+    doctor.specializations.find((specialization) => specialization.isPrimary) ??
+    doctor.specializations[0];
 
   return {
     doctorId: doctor.id,
@@ -114,7 +115,10 @@ function BookAppointmentPage() {
   } | null>(null);
 
   const bookableFacilities = useMemo(() => {
-    return doctor?.facilities.filter((facility) => facility.onlineBookingEnabled) ?? [];
+    return (
+      doctor?.facilities.filter((facility) => facility.onlineBookingEnabled) ??
+      []
+    );
   }, [doctor]);
 
   const selectedFacility = useMemo(() => {
@@ -266,7 +270,9 @@ function BookAppointmentPage() {
   if (loadError || !doctor) {
     return (
       <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-red-600">{loadError ?? "Doctor not found."}</p>
+        <p className="text-sm text-red-600">
+          {loadError ?? "Doctor not found."}
+        </p>
 
         <Link
           to="/doctors"
@@ -290,8 +296,7 @@ function BookAppointmentPage() {
         </h1>
 
         <p className="mt-2 text-sm text-slate-600">
-          {doctor.doctorName} ·{" "}
-          {selectedFacility?.facilityName ?? ""} ·{" "}
+          {doctor.doctorName} · {selectedFacility?.facilityName ?? ""} ·{" "}
           {formatDateLabel(booked.date.slice(0, 10))}
         </p>
 
@@ -319,9 +324,7 @@ function BookAppointmentPage() {
   }
 
   const steps = ["details", "slots", "confirm"] as const;
-  const currentStepIndex = steps.indexOf(
-    step === "success" ? "confirm" : step,
-  );
+  const currentStepIndex = steps.indexOf(step === "success" ? "confirm" : step);
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -603,7 +606,10 @@ function BookAppointmentPage() {
                                 : "border-slate-300 text-slate-600 hover:bg-slate-50"
                             }`}
                           >
-                            {formatWindowLabel(window.startTime, window.endTime)}
+                            {formatWindowLabel(
+                              window.startTime,
+                              window.endTime,
+                            )}
                           </button>
                         );
                       })}
