@@ -7,12 +7,14 @@ import { DoctorController } from "./doctor.controller.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
+import { requireVerifiedDoctor } from "../../middleware/verified-doctor.middleware.js";
 
 import {
   applyDoctorSchema,
   availableSlotsQuerySchema,
   doctorIdSchema,
   listDoctorsQuerySchema,
+  pendingApplicationsQuerySchema,
   revokeDoctorSchema,
   updateDoctorProfileSchema,
 } from "./doctor.validation.js";
@@ -34,16 +36,35 @@ router.get(
   doctorController.getSpecializations.bind(doctorController),
 );
 
+// Admin-only pending doctor application queue.
+router.get(
+  "/applications",
+  requireAuth,
+  requireRole(UserRole.ADMIN),
+  validate({ query: pendingApplicationsQuerySchema }),
+  doctorController.getPendingApplications.bind(doctorController),
+);
+
 // Authenticated doctor's own profile
+router.get(
+  "/application/me",
+  requireAuth,
+  doctorController.getMyApplicationStatus.bind(doctorController),
+);
+
 router.get(
   "/me",
   requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
   doctorController.getMyDoctorProfile.bind(doctorController),
 );
 
 router.patch(
   "/me",
   requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
   validate({ body: updateDoctorProfileSchema }),
   doctorController.updateMyDoctorProfile.bind(doctorController),
 );
@@ -82,6 +103,7 @@ router.patch(
 router.post(
   "/apply",
   requireAuth,
+  requireRole(UserRole.PATIENT),
   validate({ body: applyDoctorSchema }),
   doctorController.createApplication.bind(doctorController),
 );

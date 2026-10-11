@@ -7,7 +7,7 @@ import { mediLogo } from "../assets/icons";
 const plusIcon = mediLogo;
 
 function Navbar() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, hasDoctorApplication, isDoctor, isPatient } = useAuth();
   const { location, loading } = useUserLocation();
 
   const locationText = loading
@@ -93,12 +93,12 @@ function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link
+              {isPatient && !hasDoctorApplication && !isDoctor && <Link
                 to="/apply-as-doctor"
                 className="hidden rounded-lg border border-[#e2e8f0] bg-white px-6 py-3 font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-all hover:border-[#1a73e8] hover:bg-[#f8fbff] sm:flex"
               >
-                Join as Provider
-              </Link>
+                Apply as doctor
+              </Link>}
 
               <Link
                 to="/account"

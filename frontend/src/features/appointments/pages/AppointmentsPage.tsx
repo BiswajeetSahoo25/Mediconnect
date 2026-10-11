@@ -5,6 +5,7 @@ import {
   getAppointments,
 } from "../index";
 import { ApiError } from "../../../services/api";
+import { formatAppointmentStartAt } from "../format-appointment-time";
 import {
   APPOINTMENT_STATUSES,
   APPOINTMENT_STATUS_LABELS,
@@ -98,6 +99,18 @@ function AppointmentCard({
 
         <div>
           <dt className="font-medium uppercase tracking-wide text-slate-400">
+            Time
+          </dt>
+          <dd className="mt-1 text-slate-800">
+            {formatAppointmentStartAt(
+              appointment.appointmentStartAt,
+              doctorFacility.facility.timezone,
+            )}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="font-medium uppercase tracking-wide text-slate-400">
             Type
           </dt>
 
@@ -155,9 +168,6 @@ export default function AppointmentsPage() {
 
   const fetchAppointments = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await getAppointments({
         page,
         limit: 10,
@@ -182,12 +192,8 @@ export default function AppointmentsPage() {
   }, [page, status]);
 
   useEffect(() => {
-    fetchAppointments();
+    void Promise.resolve().then(fetchAppointments);
   }, [fetchAppointments]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [status]);
 
   async function handleCancel(id: string) {
     const reason = window.prompt(
@@ -209,6 +215,8 @@ export default function AppointmentsPage() {
 
       await cancelAppointment(id, reason.trim());
 
+      setLoading(true);
+      setError(null);
       await fetchAppointments();
     } catch (caught) {
       setActionError(
@@ -248,7 +256,13 @@ export default function AppointmentsPage() {
           <button
             key={option}
             type="button"
-            onClick={() => setStatus(option)}
+            onClick={() => {
+              if (status === option) return;
+              setLoading(true);
+              setError(null);
+              setPage(1);
+              setStatus(option);
+            }}
             className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
               status === option
                 ? "bg-slate-900 text-white"
@@ -280,7 +294,11 @@ export default function AppointmentsPage() {
 
           <button
             type="button"
-            onClick={fetchAppointments}
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              void fetchAppointments();
+            }}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Try again
@@ -334,7 +352,10 @@ export default function AppointmentsPage() {
             <button
               type="button"
               disabled={pagination.page === 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              onClick={() => {
+                setLoading(true);
+                setPage((current) => Math.max(1, current - 1));
+              }}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
             >
               Previous
@@ -347,11 +368,12 @@ export default function AppointmentsPage() {
             <button
               type="button"
               disabled={pagination.page === pagination.totalPages}
-              onClick={() =>
+              onClick={() => {
+                setLoading(true);
                 setPage((current) =>
                   Math.min(pagination.totalPages, current + 1),
-                )
-              }
+                );
+              }}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40"
             >
               Next

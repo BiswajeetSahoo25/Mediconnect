@@ -1,6 +1,5 @@
 export interface DoctorSpecialization {
   id: string;
-  name: string;
   yearsInSpecialization: number | null;
   isPrimary: boolean;
   specialization: {
@@ -42,7 +41,6 @@ export interface DoctorFacility {
 
 export interface Doctor {
   id: string;
-  userId: string;
   firstName: string;
   lastName: string | null;
 
@@ -54,8 +52,6 @@ export interface Doctor {
   about: string | null;
 
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 
   specializations: DoctorSpecialization[];
   facilities: DoctorFacility[];
@@ -77,4 +73,16 @@ export interface DoctorListResponse {
 export interface DoctorResponse {
   status: "success";
   data: Doctor;
+}
+
+export interface MyDoctorProfile {
+  id: string;
+  firstName: string;
+  lastName: string | null;
+  licenseNumber: string;
+  licenseAuthority: string | null;
+  licenseVerificationStatus: string;
+  yearsOfExperience: number | null;
+  about: string | null;
+  isActive: boolean;
 }

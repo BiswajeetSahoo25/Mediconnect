@@ -1,24 +1,72 @@
-import { Prisma } from "../../generated/prisma/client.js";
+﻿import { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../config/prisma.js";
 import { mapPrismaError } from "../../errors/error-mapper.js";
 
+import { ConflictError } from "../../errors/http-errors.js";
+
+function isUniqueConstraintError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as {
+    code?: unknown;
+    message?: unknown;
+    meta?: {
+      code?: unknown;
+      driverAdapterError?: {
+        cause?: { code?: unknown; originalCode?: unknown; originalMessage?: unknown };
+      };
+    };
+  };
+  return (
+    value.code === "P2002" ||
+    value.meta?.code === "23505" ||
+    value.meta?.driverAdapterError?.cause?.code === "23505" ||
+    value.meta?.driverAdapterError?.cause?.originalCode === "23505" ||
+    (typeof value.message === "string" &&
+      value.message.includes("appointments_active_doctor_facility_start_at_key")) ||
+    (typeof value.meta?.driverAdapterError?.cause?.originalMessage === "string" &&
+      value.meta.driverAdapterError.cause.originalMessage.includes(
+        "appointments_active_doctor_facility_start_at_key",
+      ))
+  );
+}
+
 const appointmentInclude = {
+  id: true,
+  patientId: true,
+  doctorFacilityId: true,
+  appointmentType: true,
+  appointmentModel: true,
+  appointmentDate: true,
+  appointmentStartAt: true,
+  queueNumber: true,
+  status: true,
+  reason: true,
+  patientNotes: true,
+  isRescheduled: true,
+  cancellationReason: true,
+  cancellationTimestamp: true,
+  createdAt: true,
+  updatedAt: true,
   doctorFacility: {
-    include: {
+    select: {
+      id: true,
+      consultationFee: true,
+      consultationMode: true,
       doctor: {
-        include: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
           specializations: {
-            include: {
-              specialization: true,
-            },
+            select: { specialization: { select: { name: true } } },
           },
         },
       },
-      facility: true,
-      department: true,
+      facility: { select: { id: true, name: true, timezone: true } },
+      department: { select: { id: true, name: true } },
     },
   },
-} satisfies Prisma.AppointmentInclude;
+} satisfies Prisma.AppointmentSelect;
 
 export class AppointmentRepository {
   async findPatientByUserId(userId: string) {
@@ -38,6 +86,7 @@ export class AppointmentRepository {
           isActive: true,
           deletedAt: null,
           licenseVerificationStatus: "VERIFIED",
+          user: { isActive: true, deletedAt: null },
         },
         facility: {
           isVerified: true,
@@ -88,42 +137,135 @@ export class AppointmentRepository {
     });
   }
 
-  async getNextQueueNumber(doctorFacilityId: string, appointmentDate: Date) {
-    return prisma.$transaction(async (tx) => {
-      const counter = await tx.appointmentDailyCounter.upsert({
-        where: {
-          doctorFacilityId_appointmentDate: {
-            doctorFacilityId,
-            appointmentDate,
-          },
-        },
-        create: {
-          doctorFacility: {
-            connect: {
-              id: doctorFacilityId,
-            },
-          },
-          appointmentDate,
-          lastQueueNumber: 1,
-        },
-        update: {
-          lastQueueNumber: {
-            increment: 1,
-          },
-        },
-      });
-
-      return counter.lastQueueNumber;
+  async findDoctorAppointmentsNearSlots(
+    doctorId: string,
+    startsAfter: Date,
+    startsBefore: Date,
+  ) {
+    return prisma.appointment.findMany({
+      where: {
+        status: "SCHEDULED",
+        appointmentStartAt: { gt: startsAfter, lt: startsBefore },
+        doctorFacility: { doctorId },
+      },
+      select: { appointmentStartAt: true },
     });
   }
 
-  async create(data: Prisma.AppointmentCreateInput) {
+  async createBooking(input: {
+    patientId: string;
+    doctorId: string;
+    doctorFacilityId: string;
+    appointmentDate: Date;
+    appointmentStartAt: Date;
+    onlineBookingLimit: number | null;
+    appointmentType: Prisma.AppointmentCreateInput["appointmentType"];
+    appointmentModel: Prisma.AppointmentCreateInput["appointmentModel"];
+    reason?: string;
+    patientNotes?: string;
+  }) {
     try {
-      return await prisma.appointment.create({
-        data,
-        include: appointmentInclude,
+      return await prisma.$transaction(async (tx) => {
+        // A doctor may have multiple facility/department assignments. Lock the
+        // owning doctor row so concurrent bookings cannot overlap across them.
+        await tx.$queryRaw`
+          SELECT "id"
+          FROM "doctors"
+          WHERE "id" = ${input.doctorId}::uuid
+          FOR UPDATE
+        `;
+
+        const counter = await tx.appointmentDailyCounter.upsert({
+          where: {
+            doctorFacilityId_appointmentDate: {
+              doctorFacilityId: input.doctorFacilityId,
+              appointmentDate: input.appointmentDate,
+            },
+          },
+          create: {
+            doctorFacilityId: input.doctorFacilityId,
+            appointmentDate: input.appointmentDate,
+            lastQueueNumber: 0,
+          },
+          update: { lastQueueNumber: { increment: 0 } },
+        });
+
+        // Serialize bookings for this doctor/facility and local date. The lock
+        // makes the capacity count and queue allocation part of one critical
+        // section; the partial unique index remains the final slot guard.
+        await tx.$queryRaw`
+          SELECT "id"
+          FROM "appointment_daily_counters"
+          WHERE "doctor_facility_id" = ${input.doctorFacilityId}::uuid
+            AND "appointment_date" = ${input.appointmentDate.toISOString().slice(0, 10)}::date
+          FOR UPDATE
+        `;
+
+        const scheduledCount = await tx.appointment.count({
+          where: {
+            doctorFacilityId: input.doctorFacilityId,
+            appointmentDate: input.appointmentDate,
+            status: "SCHEDULED",
+          },
+        });
+        if (
+          input.onlineBookingLimit !== null &&
+          scheduledCount >= input.onlineBookingLimit
+        ) {
+          throw new ConflictError(
+            "Online booking limit has been reached for this date",
+          );
+        }
+
+        const slotTaken = await tx.appointment.findFirst({
+          where: {
+            status: "SCHEDULED",
+            appointmentStartAt: {
+              gt: new Date(input.appointmentStartAt.getTime() - 30 * 60_000),
+              lt: new Date(input.appointmentStartAt.getTime() + 30 * 60_000),
+            },
+            doctorFacility: { doctorId: input.doctorId },
+          },
+          select: { id: true },
+        });
+        if (slotTaken) {
+          throw new ConflictError("This appointment slot is no longer available");
+        }
+
+        const highestQueue = await tx.appointment.aggregate({
+          where: {
+            doctorFacilityId: input.doctorFacilityId,
+            appointmentDate: input.appointmentDate,
+          },
+          _max: { queueNumber: true },
+        });
+        const queueNumber =
+          Math.max(counter.lastQueueNumber, highestQueue._max.queueNumber ?? 0) + 1;
+
+        await tx.appointmentDailyCounter.update({
+          where: { id: counter.id },
+          data: { lastQueueNumber: queueNumber },
+        });
+
+        return tx.appointment.create({
+          data: {
+            patient: { connect: { id: input.patientId } },
+            doctorFacility: { connect: { id: input.doctorFacilityId } },
+            appointmentType: input.appointmentType,
+            appointmentModel: input.appointmentModel,
+            appointmentDate: input.appointmentDate,
+            appointmentStartAt: input.appointmentStartAt,
+            queueNumber,
+            reason: input.reason,
+            patientNotes: input.patientNotes,
+          },
+          select: appointmentInclude,
+        });
       });
     } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictError("This appointment slot is no longer available");
+      }
       throw mapPrismaError(error);
     }
   }
@@ -134,7 +276,7 @@ export class AppointmentRepository {
         id,
         patientId,
       },
-      include: appointmentInclude,
+      select: appointmentInclude,
     });
   }
 
@@ -152,7 +294,7 @@ export class AppointmentRepository {
     const [appointments, total] = await prisma.$transaction([
       prisma.appointment.findMany({
         where: scopedWhere,
-        include: appointmentInclude,
+        select: appointmentInclude,
         orderBy: [
           {
             appointmentDate: "desc",
@@ -183,7 +325,7 @@ export class AppointmentRepository {
           id,
         },
         data,
-        include: appointmentInclude,
+        select: appointmentInclude,
       });
     } catch (error) {
       throw mapPrismaError(error);
@@ -209,7 +351,7 @@ export class AppointmentRepository {
     const [appointments, total] = await prisma.$transaction([
       prisma.appointment.findMany({
         where: scopedWhere,
-        include: appointmentInclude,
+        select: appointmentInclude,
         orderBy: [
           {
             appointmentDate: "desc",

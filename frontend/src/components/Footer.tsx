@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import {
   twitterIcon,
   facebookIcon,
@@ -18,9 +19,8 @@ const patientLinks = [
 ];
 
 const doctorLinks = [
-  { label: "Join Medico", to: "/apply-as-doctor" },
+  { label: "Apply as doctor", to: "/apply-as-doctor" },
   { label: "Provider Login", to: "/login" },
-  { label: "Consulting Dashboard", to: "/doctor-dashboard" },
   // { label: "Provider Resources", to: "#" },
   // { label: "Clinics Hub", to: "#" },
 ];
@@ -86,6 +86,8 @@ function SocialButton({ icon, label }: { icon: string; label: string }) {
 }
 
 function Footer() {
+  const { hasDoctorApplication, isDoctor, isPatient, isAuthenticated } = useAuth();
+
   return (
     <footer className="bg-[#0f172a]">
       <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-16 lg:px-20">
@@ -120,7 +122,14 @@ function Footer() {
           {/* Link columns */}
           <div className="grid flex-1 grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
             <FooterColumn title="For Patients" links={patientLinks} />
-            <FooterColumn title="For Doctors" links={doctorLinks} />
+            <FooterColumn
+              title="For Doctors"
+              links={doctorLinks.filter(
+                (link) =>
+                  link.to !== "/apply-as-doctor" ||
+                  (!hasDoctorApplication && !isDoctor && (!isAuthenticated || isPatient)),
+              )}
+            />
             <FooterColumn title="About Us" links={aboutLinks} />
             <FooterColumn title="Help & Legal" links={legalLinks} />
           </div>

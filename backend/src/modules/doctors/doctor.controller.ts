@@ -10,6 +10,7 @@ import type {
   AvailableSlotsQuery,
   DoctorIdInput,
   ListDoctorsQuery,
+  PendingApplicationsQuery,
   RevokeDoctorInput,
   UpdateDoctorProfileInput,
 } from "./doctor.validation.js";
@@ -26,6 +27,14 @@ export class DoctorController {
       status: "success",
       data: result,
     });
+  }
+
+  async getPendingApplications(req: Request, res: Response) {
+    const result = await doctorService.getPendingApplications(
+      req.validated.query as PendingApplicationsQuery,
+    );
+
+    return res.status(200).json({ status: "success", data: result });
   }
 
   async getDoctor(req: Request, res: Response) {
@@ -92,6 +101,21 @@ export class DoctorController {
     return res.status(200).json({
       status: "success",
       data: doctor,
+    });
+  }
+
+  async getMyApplicationStatus(req: Request, res: Response) {
+    const userId = req.user?.sub;
+
+    if (!userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    const status = await doctorService.getMyApplicationStatus(userId);
+
+    return res.status(200).json({
+      status: "success",
+      data: status,
     });
   }
 

@@ -3,8 +3,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import PublicLayout from "./layouts/PublicLayout";
 import AppLayout from "./layouts/AppLayout";
+import DoctorWorkspaceLayout from "./layouts/DoctorWorkspaceLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoleRoute from "./components/ProtectedRoleRoute";
+import PatientDashboardRoute from "./components/PatientDashboardRoute";
 import GuestRoute from "./components/GuestRoute";
 import OnboardingRequiredRoute from "./components/OnboardingRequiredRoute";
 
@@ -14,6 +17,7 @@ import SignupPage from "./features/auth/pages/SignupPage";
 import DashboardPage from "./features/patients/pages/DashboardPage";
 import OnboardingPage from "./features/patients/pages/OnboardingPage";
 import DoctorDashboardPage from "./features/doctors/pages/DoctorDashboardPage";
+import DoctorProfessionalProfilePage from "./features/doctors/pages/DoctorProfessionalProfilePage";
 import DoctorApplicationPage from "./features/doctors/pages/DoctorApplicationPage";
 import FeaturePage from "./pages/FeaturePage";
 import HealthArticlesPage from "./features/articles/pages/HealthArticlesPage";
@@ -27,6 +31,7 @@ import DoctorsPage from "./features/doctors/pages/DoctorsPage";
 import DoctorProfilePage from "./features/doctors/pages/DoctorProfilePage";
 import BookAppointmentPage from "./features/appointments/pages/BookAppointmentPage";
 import AppointmentsPage from "./features/appointments/pages/AppointmentsPage";
+import DoctorAppointmentsPage from "./features/appointments/pages/DoctorAppointmentsPage";
 import FAQPage from "./pages/FAQPage";
 import HelpPage from "./pages/HelpPage";
 import ContactPage from "./pages/ContactPage";
@@ -34,6 +39,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import MedicinesPage from "./features/medicines/pages/MedicinesPage";
 import MedicineDetailsPage from "./features/medicines/pages/MedicineDetailsPage";
+import DoctorApplicationsPage from "./features/admin/pages/DoctorApplicationsPage";
 
 import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
@@ -79,19 +85,28 @@ function App() {
 
             {/* Protected application */}
             <Route element={<ProtectedRoute />}>
+              <Route element={<ProtectedRoleRoute role="ADMIN" />}>
+                <Route element={<AppLayout />}>
+                  <Route
+                    path="/admin/doctor-applications"
+                    element={<DoctorApplicationsPage />}
+                  />
+                </Route>
+              </Route>
+
               <Route path="/onboarding" element={<OnboardingPage />} />
 
               <Route element={<OnboardingRequiredRoute />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route
-                    path="/doctor-dashboard"
-                    element={<DoctorDashboardPage />}
-                  />
-                  <Route
-                    path="/apply-as-doctor"
-                    element={<DoctorApplicationPage />}
-                  />
+                  <Route element={<PatientDashboardRoute />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                  </Route>
+                  <Route element={<ProtectedRoleRoute role="PATIENT" />}>
+                    <Route
+                      path="/apply-as-doctor"
+                      element={<DoctorApplicationPage />}
+                    />
+                  </Route>
                   <Route path="/account" element={<AccountSettingsPage />} />
                   <Route path="/doctors" element={<DoctorsPage />} />
                   <Route path="/doctors/:id" element={<DoctorProfilePage />} />
@@ -114,6 +129,22 @@ function App() {
                       />
                     }
                   />
+                </Route>
+                <Route element={<ProtectedRoleRoute role="DOCTOR" />}>
+                  <Route element={<DoctorWorkspaceLayout />}>
+                    <Route
+                      path="/doctor-dashboard"
+                      element={<DoctorDashboardPage />}
+                    />
+                    <Route
+                      path="/doctor-dashboard/profile"
+                      element={<DoctorProfessionalProfilePage />}
+                    />
+                    <Route
+                      path="/doctor-dashboard/appointments"
+                      element={<DoctorAppointmentsPage />}
+                    />
+                  </Route>
                 </Route>
               </Route>
             </Route>

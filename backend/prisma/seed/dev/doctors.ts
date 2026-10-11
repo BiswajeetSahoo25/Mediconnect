@@ -124,10 +124,11 @@ async function seedDoctorRecords(
   facilityIds: string[],
   departmentMap: Map<string, string>,
 ) {
-  const passwordHash = await argon2.hash(DEMO_DOCTOR_PASSWORD);
-
   for (let index = 0; index < doctorSeedData.length; index++) {
     const doctorData = doctorSeedData[index];
+    const passwordHash = await argon2.hash(
+      doctorData.password ?? DEMO_DOCTOR_PASSWORD,
+    );
 
     /*
      * --------------------------------------------------
@@ -143,6 +144,9 @@ async function seedDoctorRecords(
         role: UserRole.DOCTOR,
         isVerified: true,
         isActive: true,
+        ...(doctorData.password
+          ? { passwordHash, onboardingCompletedAt: new Date() }
+          : {}),
       },
       create: {
         email: doctorData.email,
@@ -150,6 +154,7 @@ async function seedDoctorRecords(
         role: UserRole.DOCTOR,
         isVerified: true,
         isActive: true,
+        ...(doctorData.password ? { onboardingCompletedAt: new Date() } : {}),
       },
     });
 

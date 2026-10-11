@@ -45,18 +45,13 @@ function formatDateLabel(dateKey: string) {
   );
 }
 
-function formatWindowLabel(startTime: string, endTime: string) {
-  const [startHour = 0, startMinute = 0] = startTime.split(":").map(Number);
-  const [endHour = 0, endMinute = 0] = endTime.split(":").map(Number);
-
-  const toLabel = (hour: number, minute: number) => {
-    const period = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-
-    return `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
-  };
-
-  return `${toLabel(startHour, startMinute)} – ${toLabel(endHour, endMinute)}`;
+function formatAppointmentTime(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+    timeZoneName: "short",
+  }).format(new Date(value));
 }
 
 function toDoctorContext(doctor: Doctor): BookingDoctorContext {
@@ -64,7 +59,6 @@ function toDoctorContext(doctor: Doctor): BookingDoctorContext {
     doctor.specializations.find((specialization) => specialization.isPrimary) ??
     doctor.specializations[0];
 
-  console.log("Doctor facilities:", doctor.facilities);
   return {
     doctorId: doctor.id,
     doctorName: `Dr. ${doctor.firstName}${doctor.lastName ? ` ${doctor.lastName}` : ""}`,
@@ -103,9 +97,11 @@ function BookAppointmentPage() {
   const [availabilityError, setAvailabilityError] = useState<string | null>(
     null,
   );
+  const [availabilityRefreshCount, setAvailabilityRefreshCount] = useState(0);
+  const [availabilityNotice, setAvailabilityNotice] = useState<string | null>(null);
 
   const [dateKey, setDateKey] = useState("");
-  const [selectedWindowKey, setSelectedWindowKey] = useState("");
+  const [selectedSlotStartAt, setSelectedSlotStartAt] = useState("");
 
   const [step, setStep] = useState<Step>("details");
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +110,8 @@ function BookAppointmentPage() {
     id: string;
     queueNumber: number;
     date: string;
+    startAt: string;
+    timezone: string;
   } | null>(null);
 
   const bookableFacilities = useMemo(() => {
@@ -129,15 +127,35 @@ function BookAppointmentPage() {
     );
   }, [bookableFacilities, selectedFacilityId]);
 
+  const availableModels = useMemo(() => {
+    if (!selectedFacility) return [...APPOINTMENT_MODELS];
+    if (selectedFacility?.consultationMode === "ONLINE") {
+      return APPOINTMENT_MODELS.filter((model) => model !== "IN_PERSON");
+    }
+    if (
+      selectedFacility?.consultationMode === "IN_PERSON" ||
+      selectedFacility?.consultationMode === "OFFLINE"
+    ) {
+      return APPOINTMENT_MODELS.filter((model) => model === "IN_PERSON");
+    }
+    if (selectedFacility.consultationMode === "BOTH") {
+      return [...APPOINTMENT_MODELS];
+    }
+    return [];
+  }, [selectedFacility]);
+
+  const effectiveAppointmentModel = availableModels.includes(appointmentModel)
+    ? appointmentModel
+    : availableModels[0];
+
   const selectedDate = useMemo(() => {
     return availability?.data.dates.find((entry) => entry.date === dateKey);
   }, [availability, dateKey]);
 
-  const selectedWindow = useMemo(() => {
-    return selectedDate?.windows.find((window) => {
-      return `${window.startTime}-${window.endTime}` === selectedWindowKey;
-    });
-  }, [selectedDate, selectedWindowKey]);
+  const selectedSlot = useMemo(
+    () => selectedDate?.slots.find((slot) => slot.startAt === selectedSlotStartAt),
+    [selectedDate, selectedSlotStartAt],
+  );
 
   useEffect(() => {
     async function fetchDoctor() {
@@ -176,31 +194,23 @@ function BookAppointmentPage() {
   }, [id]);
 
   useEffect(() => {
-    async function fetchAvailability() {
-      if (!selectedFacilityId) {
-        setAvailability(null);
-        return;
-      }
+    let active = true;
+    if (!selectedFacilityId) return;
 
+    async function fetchAvailability() {
       try {
         setLoadingAvailability(true);
         setAvailabilityError(null);
-        setDateKey("");
-        setSelectedWindowKey("");
-
         const result = await getAppointmentAvailability(selectedFacilityId);
-
+        if (!active) return;
         setAvailability(result);
-
-        if (
-          result.data.onlineBookingEnabled &&
-          result.data.dates.length === 0
-        ) {
+        if (result.data.onlineBookingEnabled && result.data.dates.length === 0) {
           setAvailabilityError(
-            "No bookable dates in the next 7 days — the doctor may be on leave, closed, or fully booked.",
+            "No bookable dates in the next 7 days. The doctor may be on leave, closed, or fully booked.",
           );
         }
       } catch (error) {
+        if (!active) return;
         setAvailability(null);
         setAvailabilityError(
           error instanceof ApiError
@@ -208,17 +218,23 @@ function BookAppointmentPage() {
             : "Failed to check availability.",
         );
       } finally {
-        setLoadingAvailability(false);
+        if (active) setLoadingAvailability(false);
       }
     }
 
-    fetchAvailability();
-  }, [selectedFacilityId]);
+    void fetchAvailability();
+    return () => {
+      active = false;
+    };
+  }, [selectedFacilityId, availabilityRefreshCount]);
 
   async function handleConfirm() {
-    if (!selectedFacilityId || !dateKey) {
-      return;
-    }
+    if (
+      !selectedFacilityId ||
+      !selectedSlot ||
+      !effectiveAppointmentModel ||
+      submitting
+    ) return;
 
     try {
       setSubmitting(true);
@@ -227,8 +243,8 @@ function BookAppointmentPage() {
       const result = await createAppointment({
         doctorFacilityId: selectedFacilityId,
         appointmentType,
-        appointmentModel,
-        appointmentDate: dateKey,
+        appointmentModel: effectiveAppointmentModel,
+        appointmentStartAt: selectedSlot.startAt,
         ...(reason.trim() ? { reason: reason.trim() } : {}),
       });
 
@@ -236,16 +252,17 @@ function BookAppointmentPage() {
         id: result.data.id,
         queueNumber: result.data.queueNumber,
         date: result.data.appointmentDate,
+        startAt: result.data.appointmentStartAt ?? "",
+        timezone: result.data.doctorFacility.facility.timezone,
       });
       setStep("success");
     } catch (error) {
       if (error instanceof ApiError && error.statusCode === 409) {
         setSubmitError(null);
         setStep("slots");
-        setAvailabilityError(
-          "The booking limit was just reached for that date. Please pick another date.",
-        );
-        setAvailability(null);
+        setSelectedSlotStartAt("");
+        setAvailabilityNotice("That slot was just booked. Availability has been refreshed.");
+        setAvailabilityRefreshCount((count) => count + 1);
         return;
       }
 
@@ -301,6 +318,12 @@ function BookAppointmentPage() {
           {doctor.doctorName} · {selectedFacility?.facilityName ?? ""} ·{" "}
           {formatDateLabel(booked.date.slice(0, 10))}
         </p>
+
+        {booked.startAt && (
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {formatAppointmentTime(booked.startAt, booked.timezone)}
+          </p>
+        )}
 
         <p className="mt-1 text-sm font-medium text-slate-800">
           Queue number #{booked.queueNumber}
@@ -401,7 +424,12 @@ function BookAppointmentPage() {
             <select
               id="facility"
               value={selectedFacilityId}
-              onChange={(event) => setSelectedFacilityId(event.target.value)}
+              onChange={(event) => {
+                setSelectedFacilityId(event.target.value);
+                setDateKey("");
+                setSelectedSlotStartAt("");
+                setAvailabilityNotice(null);
+              }}
               className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
             >
               {bookableFacilities.length === 0 && (
@@ -455,13 +483,13 @@ function BookAppointmentPage() {
             </p>
 
             <div className="mt-2 grid grid-cols-3 gap-2">
-              {APPOINTMENT_MODELS.map((model) => (
+              {availableModels.map((model) => (
                 <button
                   key={model}
                   type="button"
                   onClick={() => setAppointmentModel(model)}
                   className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
-                    appointmentModel === model
+                    effectiveAppointmentModel === model
                       ? "border-blue-600 bg-blue-50 text-blue-700"
                       : "border-slate-300 text-slate-600 hover:bg-slate-50"
                   }`}
@@ -501,7 +529,7 @@ function BookAppointmentPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              disabled={!selectedFacilityId}
+              disabled={!selectedFacilityId || availableModels.length === 0}
               onClick={() => setStep("slots")}
               className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -536,6 +564,19 @@ function BookAppointmentPage() {
           {!loadingAvailability && availabilityError && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
               {availabilityError}
+              <button
+                type="button"
+                onClick={() => setAvailabilityRefreshCount((count) => count + 1)}
+                className="ml-3 font-semibold underline"
+              >
+                Refresh
+              </button>
+            </div>
+          )}
+
+          {!loadingAvailability && availabilityNotice && (
+            <div role="status" className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              {availabilityNotice}
             </div>
           )}
 
@@ -562,7 +603,8 @@ function BookAppointmentPage() {
                         type="button"
                         onClick={() => {
                           setDateKey(entry.date);
-                          setSelectedWindowKey("");
+                          setSelectedSlotStartAt("");
+                          setAvailabilityNotice(null);
                         }}
                         className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
                           dateKey === entry.date
@@ -586,35 +628,31 @@ function BookAppointmentPage() {
                   })}
                 </div>
 
-                {/* Time windows for selected date */}
+                {/* Available starts for selected date */}
                 {selectedDate && (
                   <div>
                     <p className="text-sm font-medium text-slate-700">
-                      Time windows for {formatDateLabel(selectedDate.date)}
+                      Available start times for {formatDateLabel(selectedDate.date)}
                     </p>
 
-                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {selectedDate.windows.map((window) => {
-                        const key = `${window.startTime}-${window.endTime}`;
-
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setSelectedWindowKey(key)}
-                            className={`rounded-lg border px-4 py-2.5 text-left text-xs font-medium transition ${
-                              selectedWindowKey === key
-                                ? "border-blue-600 bg-blue-50 text-blue-700"
-                                : "border-slate-300 text-slate-600 hover:bg-slate-50"
-                            }`}
-                          >
-                            {formatWindowLabel(
-                              window.startTime,
-                              window.endTime,
-                            )}
-                          </button>
-                        );
-                      })}
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {selectedDate.slots.map((slot) => (
+                        <button
+                          key={slot.startAt}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSlotStartAt(slot.startAt);
+                            setAvailabilityNotice(null);
+                          }}
+                          className={`rounded-lg border px-4 py-2.5 text-left text-xs font-medium transition ${
+                            selectedSlotStartAt === slot.startAt
+                              ? "border-blue-600 bg-blue-50 text-blue-700"
+                              : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {formatAppointmentTime(slot.startAt, availability.data.timezone)}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -624,7 +662,7 @@ function BookAppointmentPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              disabled={!dateKey || !selectedWindowKey || loadingAvailability}
+              disabled={!dateKey || !selectedSlotStartAt || loadingAvailability}
               onClick={() => setStep("confirm")}
               className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -673,14 +711,14 @@ function BookAppointmentPage() {
 
             <div>
               <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                Time window
+                Appointment time
               </dt>
 
               <dd className="mt-1 text-slate-800">
-                {selectedWindow
-                  ? formatWindowLabel(
-                      selectedWindow.startTime,
-                      selectedWindow.endTime,
+                {selectedSlot && availability
+                  ? formatAppointmentTime(
+                      selectedSlot.startAt,
+                      availability.data.timezone,
                     )
                   : "—"}
               </dd>
@@ -702,7 +740,9 @@ function BookAppointmentPage() {
               </dt>
 
               <dd className="mt-1 text-slate-800">
-                {APPOINTMENT_MODEL_LABELS[appointmentModel]}
+                {effectiveAppointmentModel
+                  ? APPOINTMENT_MODEL_LABELS[effectiveAppointmentModel]
+                  : "Unavailable"}
               </dd>
             </div>
 

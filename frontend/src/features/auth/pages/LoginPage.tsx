@@ -34,7 +34,13 @@ function LoginPage() {
       await refreshUser();
 
       navigate(
-        result.data.user.onboardingCompletedAt ? "/dashboard" : "/onboarding",
+        result.data.user.onboardingCompletedAt
+          ? result.data.user.role === "ADMIN"
+            ? "/admin/doctor-applications"
+            : result.data.user.role === "DOCTOR"
+              ? "/doctor-dashboard"
+              : "/dashboard"
+          : "/onboarding",
         { replace: true },
       );
     } catch (error) {

@@ -17,6 +17,10 @@ export type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasDoctorApplication: boolean;
+  isDoctor: boolean;
+  isPatient: boolean;
+  isAdmin: boolean;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 };

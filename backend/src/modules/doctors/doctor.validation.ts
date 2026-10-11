@@ -12,6 +12,11 @@ export const listDoctorsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
+export const pendingApplicationsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
 export const availableSlotsQuerySchema = z.object({
   doctorFacilityId: z.string().uuid(),
   date: z.coerce.date(),
@@ -32,7 +37,6 @@ export const updateDoctorProfileSchema = z
     lastName: z.string().trim().min(1).max(100).optional(),
     yearsOfExperience: z.number().int().min(0).optional(),
     about: z.string().trim().min(1).optional(),
-    profileImage: z.string().trim().url().max(500).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field is required",
@@ -41,6 +45,10 @@ export const updateDoctorProfileSchema = z
 export type DoctorIdInput = z.infer<typeof doctorIdSchema>;
 
 export type ListDoctorsQuery = z.infer<typeof listDoctorsQuerySchema>;
+
+export type PendingApplicationsQuery = z.infer<
+  typeof pendingApplicationsQuerySchema
+>;
 
 export type AvailableSlotsQuery = z.infer<typeof availableSlotsQuerySchema>;
 

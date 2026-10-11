@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getDoctorById } from "../index";
 import type { Doctor } from "../types";
@@ -147,11 +147,11 @@ function DoctorProfilePage() {
           Find Doctors
         </Link>
 
-        <span>›</span>
+        <span>â€º</span>
 
-        <span>{primarySpecialization?.name ?? "Specialist"}</span>
+        <span>{primarySpecialization?.specialization.name ?? "Specialist"}</span>
 
-        <span>›</span>
+        <span>â€º</span>
 
         <span className="text-slate-700">{doctorName}</span>
       </div>
@@ -173,7 +173,7 @@ function DoctorProfilePage() {
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {doctor.licenseVerificationStatus === "VERIFIED" && (
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                  ✓ Verified Specialist
+                  âœ“ Verified Specialist
                 </span>
               )}
 
@@ -189,9 +189,9 @@ function DoctorProfilePage() {
             </h1>
 
             <p className="mt-1 text-sm font-medium text-blue-600">
-              {primarySpecialization?.name ?? "Specialist"}
-              {primaryFacility?.facilityName
-                ? ` · ${primaryFacility.facilityName}`
+              {primarySpecialization?.specialization.name ?? "Specialist"}
+              {primaryFacility?.facility.name
+                ? ` Â· ${primaryFacility.facility.name}`
                 : ""}
             </p>
 
@@ -216,7 +216,7 @@ function DoctorProfilePage() {
 
                 <p className="mt-1 text-sm font-medium text-slate-800">
                   {primaryFacility
-                    ? `₹${primaryFacility.consultationFee}`
+                    ? `â‚¹${primaryFacility.consultationFee}`
                     : "Not available"}
                 </p>
               </div>
@@ -246,7 +246,7 @@ function DoctorProfilePage() {
                 aria-label="Message doctor"
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50"
               >
-                □
+                â–¡
               </button>
             </div>
           </div>
@@ -270,7 +270,7 @@ function DoctorProfilePage() {
               {tab}
 
               {tab === "Reviews" && (
-                <span className="ml-1 text-[10px] text-slate-400">—</span>
+                <span className="ml-1 text-[10px] text-slate-400">â€”</span>
               )}
             </button>
           ))}
@@ -288,7 +288,7 @@ function DoctorProfilePage() {
 
             <p className="mt-4 whitespace-pre-line text-xs leading-6 text-slate-600">
               {doctor.about ??
-                `${doctorName} is a verified ${primarySpecialization?.name ?? "medical specialist"} on MediConnect.`}
+                `${doctorName} is a verified ${primarySpecialization?.specialization.name ?? "medical specialist"} on MediConnect.`}
             </p>
           </section>
 
@@ -301,7 +301,7 @@ function DoctorProfilePage() {
             <div className="mt-5 space-y-5">
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  ✓
+                  âœ“
                 </div>
 
                 <div>
@@ -317,7 +317,7 @@ function DoctorProfilePage() {
 
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  ✓
+                  âœ“
                 </div>
 
                 <div>
@@ -333,7 +333,7 @@ function DoctorProfilePage() {
 
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  🎓
+                  ðŸŽ“
                 </div>
 
                 <div>
@@ -342,7 +342,7 @@ function DoctorProfilePage() {
                   </p>
 
                   <p className="mt-1 text-[11px] text-slate-500">
-                    {primarySpecialization?.name ?? "Not available"}
+                    {primarySpecialization?.specialization.name ?? "Not available"}
                   </p>
 
                   {primarySpecialization?.yearsInSpecialization && (
@@ -356,7 +356,7 @@ function DoctorProfilePage() {
 
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  🏥
+                  ðŸ¥
                 </div>
 
                 <div>
@@ -365,7 +365,7 @@ function DoctorProfilePage() {
                   </p>
 
                   <p className="mt-1 text-[11px] text-slate-500">
-                    {primaryFacility?.departmentName ?? "Not available"}
+                    {primaryFacility?.department.name ?? "Not available"}
                   </p>
                 </div>
               </div>
@@ -379,7 +379,7 @@ function DoctorProfilePage() {
             <div className="mt-5">
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  🩺
+                  ðŸ©º
                 </div>
 
                 <div>
@@ -474,11 +474,11 @@ function DoctorProfilePage() {
                   </p>
 
                   <p className="mt-2 text-xs font-medium text-slate-800">
-                    {primaryFacility.facilityName}
+                    {primaryFacility.facility.name}
                   </p>
 
                   <p className="mt-1 text-[10px] text-slate-500">
-                    {primaryFacility.departmentName}
+                    {primaryFacility.department.name}
                   </p>
                 </div>
 

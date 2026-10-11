@@ -3,20 +3,127 @@ import { prisma } from "../../config/prisma.js";
 import { mapPrismaError } from "../../errors/error-mapper.js";
 import { ConflictError, NotFoundError } from "../../errors/http-errors.js";
 
-export class DoctorRepository {
-  async findMany(where: Prisma.DoctorWhereInput, skip: number, take: number) {
-    const include = {
-      specializations: { include: { specialization: true } },
-      facilities: {
-        where: { isActive: true },
-        include: { facility: true, department: true },
+const publicDoctorFields = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  licenseNumber: true,
+  licenseAuthority: true,
+  licenseVerificationStatus: true,
+  yearsOfExperience: true,
+  about: true,
+  isActive: true,
+  specializations: {
+    select: {
+      id: true,
+      yearsInSpecialization: true,
+      isPrimary: true,
+      specialization: {
+        select: { id: true, name: true, description: true },
       },
-    } satisfies Prisma.DoctorInclude;
+    },
+  },
+} satisfies Prisma.DoctorSelect;
 
+const publicFacilityFilter = {
+  isActive: true,
+  facility: { isVerified: true, deletedAt: null },
+};
+
+const publicDoctorListSelect = {
+  ...publicDoctorFields,
+  facilities: {
+    where: publicFacilityFilter,
+    select: {
+      id: true,
+      facilityId: true,
+      departmentId: true,
+      consultationFee: true,
+      consultationMode: true,
+      onlineBookingEnabled: true,
+      onlineBookingLimit: true,
+      joiningDate: true,
+      facility: { select: { id: true, name: true } },
+      department: { select: { id: true, name: true } },
+    },
+  },
+} satisfies Prisma.DoctorSelect;
+
+const publicDoctorDetailSelect = {
+  ...publicDoctorFields,
+  facilities: {
+    where: publicFacilityFilter,
+    select: {
+      id: true,
+      facilityId: true,
+      departmentId: true,
+      consultationFee: true,
+      consultationMode: true,
+      onlineBookingEnabled: true,
+      onlineBookingLimit: true,
+      joiningDate: true,
+      facility: { select: { id: true, name: true } },
+      department: { select: { id: true, name: true } },
+      availability: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          doctorFacilityId: true,
+          dayOfWeek: true,
+          startTime: true,
+          endTime: true,
+          isActive: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.DoctorSelect;
+
+export class DoctorRepository {
+  async findPendingApplications(skip: number, take: number) {
+    const where: Prisma.DoctorWhereInput = {
+      licenseVerificationStatus: LicenseStatus.PENDING,
+      deletedAt: null,
+      user: { isActive: true, deletedAt: null },
+    };
+
+    const [items, total] = await prisma.$transaction([
+      prisma.doctor.findMany({
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          licenseNumber: true,
+          licenseAuthority: true,
+          licenseVerificationStatus: true,
+          yearsOfExperience: true,
+          about: true,
+          createdAt: true,
+          user: { select: { email: true, phone: true } },
+          specializations: {
+            select: {
+              id: true,
+              isPrimary: true,
+              specialization: { select: { id: true, name: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+        skip,
+        take,
+      }),
+      prisma.doctor.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async findMany(where: Prisma.DoctorWhereInput, skip: number, take: number) {
     const [doctors, total] = await prisma.$transaction([
       prisma.doctor.findMany({
         where,
-        include,
+        select: publicDoctorListSelect,
         orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
         skip,
         take,
@@ -30,17 +137,20 @@ export class DoctorRepository {
   async findById(id: string) {
     return prisma.doctor.findFirst({
       where: { id, isActive: true, deletedAt: null },
-      include: {
-        specializations: { include: { specialization: true } },
-        facilities: {
-          where: { isActive: true },
-          include: {
-            facility: true,
-            department: true,
-            availability: { where: { isActive: true } },
-          },
-        },
+      select: publicDoctorDetailSelect,
+    });
+  }
+
+  async findPublicById(id: string) {
+    return prisma.doctor.findFirst({
+      where: {
+        id,
+        isActive: true,
+        deletedAt: null,
+        licenseVerificationStatus: LicenseStatus.VERIFIED,
+        user: { isActive: true, deletedAt: null },
       },
+      select: publicDoctorDetailSelect,
     });
   }
   
@@ -74,7 +184,13 @@ export class DoctorRepository {
       where: {
         id,
         isActive: true,
-        doctor: { isActive: true, deletedAt: null },
+        doctor: {
+          isActive: true,
+          deletedAt: null,
+          licenseVerificationStatus: LicenseStatus.VERIFIED,
+          user: { isActive: true, deletedAt: null },
+        },
+        facility: { isVerified: true, deletedAt: null },
       },
       include: {
         availability: { where: { isActive: true } },
@@ -123,6 +239,7 @@ export class DoctorRepository {
       return await prisma.$transaction(async (tx) => {
         const doctor = await tx.doctor.findUnique({
           where: { id: doctorId },
+          include: { user: true },
         });
 
         if (!doctor) {
@@ -135,10 +252,31 @@ export class DoctorRepository {
           );
         }
 
+        if (
+          doctor.deletedAt !== null ||
+          !doctor.user.isActive ||
+          doctor.user.deletedAt !== null ||
+          doctor.user.role !== UserRole.PATIENT
+        ) {
+          throw new ConflictError(
+            "This application is not eligible for approval",
+          );
+        }
+
         const now = new Date();
 
-        const updatedDoctor = await tx.doctor.update({
-          where: { id: doctorId },
+        const updateResult = await tx.doctor.updateMany({
+          where: {
+            id: doctorId,
+            licenseVerificationStatus: LicenseStatus.PENDING,
+            isActive: true,
+            deletedAt: null,
+            user: {
+              role: UserRole.PATIENT,
+              isActive: true,
+              deletedAt: null,
+            },
+          },
           data: {
             licenseVerificationStatus: LicenseStatus.VERIFIED,
             licenseVerifiedAt: now,
@@ -148,14 +286,31 @@ export class DoctorRepository {
           },
         });
 
-        await tx.user.update({
-          where: { id: doctor.userId },
+        if (updateResult.count !== 1) {
+          throw new ConflictError(
+            "Doctor application has already been processed",
+          );
+        }
+
+        const roleUpdate = await tx.user.updateMany({
+          where: {
+            id: doctor.userId,
+            role: UserRole.PATIENT,
+            isActive: true,
+            deletedAt: null,
+          },
           data: {
             role: UserRole.DOCTOR,
           },
         });
 
-        return updatedDoctor;
+        if (roleUpdate.count !== 1) {
+          throw new ConflictError(
+            "The applicant account changed before approval completed",
+          );
+        }
+
+        return tx.doctor.findUniqueOrThrow({ where: { id: doctorId } });
       });
     } catch (error) {
       throw mapPrismaError(error);

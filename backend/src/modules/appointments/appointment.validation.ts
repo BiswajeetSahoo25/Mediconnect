@@ -25,7 +25,7 @@ export const createAppointmentSchema = z.object({
 
   appointmentModel: z.enum(appointmentModels),
 
-  appointmentDate: z.coerce.date(),
+  appointmentStartAt: z.iso.datetime({ offset: true }).transform((value) => new Date(value)),
 
   reason: z.string().trim().min(1).max(2000).optional(),
 

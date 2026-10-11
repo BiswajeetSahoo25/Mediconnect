@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, createDoctorApplication } from "../../../services/api";
+import { useAuth } from "../../../hooks/useAuth";
 
 function DoctorApplicationPage() {
+  const { refreshUser } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +22,7 @@ function DoctorApplicationPage() {
         yearsOfExperience: Number(form.get("yearsOfExperience")),
         about: String(form.get("about")) || undefined,
       });
+      await refreshUser();
       setSubmitted(true);
     } catch (caughtError) {
       setError(caughtError instanceof ApiError ? caughtError.message : "Could not submit your application.");
@@ -36,7 +39,7 @@ function DoctorApplicationPage() {
       {submitted ? (
         <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
           <h3 className="font-semibold text-emerald-900">Application saved for review</h3>
-          <p className="mt-2 text-sm text-emerald-800">We&apos;ll notify you when the verification workflow is available. Your account remains a patient account until approval.</p>
+          <p className="mt-2 text-sm text-emerald-800">Your application is pending review. Your account remains a patient account until an administrator approves your licence.</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2">

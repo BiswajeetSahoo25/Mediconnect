@@ -7,6 +7,7 @@ import { AppointmentController } from "./appointment.controller.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import { requireRole } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
+import { requireVerifiedDoctor } from "../../middleware/verified-doctor.middleware.js";
 
 import {
   appointmentIdSchema,
@@ -47,6 +48,7 @@ router.get(
 router.get(
   "/doctor/me",
   requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
   validate({ query: listAppointmentsQuerySchema }),
   appointmentController.getDoctorAppointments.bind(appointmentController),
 );

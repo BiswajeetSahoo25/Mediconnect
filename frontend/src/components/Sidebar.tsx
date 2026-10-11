@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 type IconProps = {
   className?: string;
@@ -117,6 +118,7 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
 
 function Sidebar() {
   const location = useLocation();
+  const { hasDoctorApplication, isDoctor, isPatient, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const navigation = [
@@ -140,6 +142,15 @@ function Sidebar() {
       path: "/records",
       icon: RecordsIcon,
     },
+    ...(user?.role === "ADMIN"
+      ? [
+          {
+            label: "Doctor applications",
+            path: "/admin/doctor-applications",
+            icon: ProviderIcon,
+          },
+        ]
+      : []),
   ];
 
   const providerNavigation = [
@@ -148,11 +159,15 @@ function Sidebar() {
       path: "/apply-as-doctor",
       icon: ProviderIcon,
     },
-    {
-      label: "Doctor dashboard",
-      path: "/doctor-dashboard",
-      icon: DoctorIcon,
-    },
+    ...(isDoctor
+      ? [
+          {
+            label: "Doctor dashboard",
+            path: "/doctor-dashboard",
+            icon: DoctorIcon,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -212,29 +227,35 @@ function Sidebar() {
             </p>
           )}
 
-          {providerNavigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+          {providerNavigation
+            .filter(
+              (item) =>
+                item.path !== "/apply-as-doctor" ||
+                (isPatient && !hasDoctorApplication),
+            )
+            .map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
 
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                title={collapsed ? item.label : undefined}
-                className={`flex items-center rounded-xl py-3 text-sm font-medium transition ${
-                  collapsed ? "justify-center px-0" : "gap-3 px-3"
-                } ${
-                  isActive
-                    ? "bg-blue-50 text-[#1a73e8]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  title={collapsed ? item.label : undefined}
+                  className={`flex items-center rounded-xl py-3 text-sm font-medium transition ${
+                    collapsed ? "justify-center px-0" : "gap-3 px-3"
+                  } ${
+                    isActive
+                      ? "bg-blue-50 text-[#1a73e8]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
 
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              );
+            })}
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-4">

@@ -26,15 +26,25 @@ export async function getAppointments(params?: GetAppointmentsParams) {
   }
 }
 
+export async function getDoctorAppointments(params?: GetAppointmentsParams) {
+  try {
+    const response = await api.get<AppointmentListResponse>(
+      "/appointments/doctor/me",
+      { params },
+    );
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
 export interface CreateAppointmentPayload {
   doctorFacilityId: string;
-  appointmentType: string;
-  appointmentModel: string;
-  /**
-   * `YYYY-MM-DD`. The backend validates the booking window,
-   * leaves, availability and booking limits.
-   */
-  appointmentDate: string;
+  appointmentType: AppointmentResponse["data"]["appointmentType"];
+  appointmentModel: AppointmentResponse["data"]["appointmentModel"];
+  /** ISO timestamp returned by the facility-local availability endpoint. */
+  appointmentStartAt: string;
   reason?: string;
   patientNotes?: string;
 }

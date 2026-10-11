@@ -4,8 +4,9 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -668,6 +669,7 @@ model Appointment {
   appointmentType       AppointmentType   @map("appointment_type")
   appointmentModel      AppointmentModel  @map("appointment_model")
   appointmentDate       DateTime          @map("appointment_date") @db.Date
+  appointmentStartAt    DateTime?         @map("appointment_start_at") @db.Timestamptz(3)
   queueNumber           Int               @map("queue_number")
   status                AppointmentStatus @default(SCHEDULED)
   reason                String?           @db.Text
@@ -725,6 +727,7 @@ model Appointment {
   @@index([appointmentDate])
   @@index([status])
   @@index([doctorFacilityId, appointmentDate, status])
+  @@unique([doctorFacilityId, appointmentStartAt], where: { appointmentStartAt: { not: null }, status: "SCHEDULED" }, map: "appointments_active_doctor_facility_start_at_key")
   @@map("appointments")
 }
 

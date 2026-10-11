@@ -1,5 +1,5 @@
-import { api } from "../../../services/api";
-import type { DoctorListResponse, DoctorResponse } from "../types";
+import { api, handleApiError } from "../../../services/api";
+import type { DoctorListResponse, DoctorResponse, MyDoctorProfile } from "../types";
 
 export interface GetDoctorsParams {
   page?: number;
@@ -10,19 +10,27 @@ export interface GetDoctorsParams {
 }
 
 export async function getDoctors(params?: GetDoctorsParams) {
-  const response = await api.get<DoctorListResponse>("/doctors", {
-    params,
-  });
+  try {
+    const response = await api.get<DoctorListResponse>("/doctors", {
+      params,
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 export async function getDoctorById(id: string) {
-  const response = await api.get<DoctorResponse>(
-    `/doctors/${encodeURIComponent(id)}`,
-  );
+  try {
+    const response = await api.get<DoctorResponse>(
+      `/doctors/${encodeURIComponent(id)}`,
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 export interface SpecializationOption {
@@ -32,12 +40,16 @@ export interface SpecializationOption {
 }
 
 export async function getSpecializations() {
-  const response = await api.get<{
-    status: "success";
-    data: SpecializationOption[];
-  }>("/doctors/specializations");
+  try {
+    const response = await api.get<{
+      status: "success";
+      data: SpecializationOption[];
+    }>("/doctors/specializations");
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 export interface DoctorAvailabilityResponse {
@@ -59,36 +71,69 @@ export async function getDoctorAvailability(
   doctorFacilityId: string,
   date: string,
 ) {
-  const response = await api.get<DoctorAvailabilityResponse>(
-    `/doctors/${encodeURIComponent(id)}/available-slots`,
-    {
-      params: {
-        doctorFacilityId,
-        date,
+  try {
+    const response = await api.get<DoctorAvailabilityResponse>(
+      `/doctors/${encodeURIComponent(id)}/available-slots`,
+      {
+        params: {
+          doctorFacilityId,
+          date,
+        },
       },
-    },
-  );
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 
 export async function getMyDoctorProfile() {
-  const response = await api.get<{
-    status: "success";
-    data: {
-      id: string;
-      firstName: string;
-      lastName: string | null;
-      licenseNumber: string;
-      licenseAuthority: string | null;
-      licenseVerificationStatus: string;
-      yearsOfExperience: number | null;
-      about: string | null;
-      isActive: boolean;
-    };
-  }>("/doctors/me");
+  try {
+    const response = await api.get<{
+      status: "success";
+      data: MyDoctorProfile;
+    }>("/doctors/me");
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export interface UpdateMyDoctorProfileInput {
+  firstName?: string;
+  lastName?: string;
+  yearsOfExperience?: number;
+  about?: string;
+}
+
+export async function updateMyDoctorProfile(
+  data: UpdateMyDoctorProfileInput,
+) {
+  try {
+    const response = await api.patch<{
+      status: "success";
+      data: MyDoctorProfile;
+    }>("/doctors/me", data);
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getMyDoctorApplicationStatus() {
+  try {
+    const response = await api.get<{
+      status: "success";
+      data: { hasApplication: boolean };
+    }>("/doctors/application/me");
+
+    return response.data.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 

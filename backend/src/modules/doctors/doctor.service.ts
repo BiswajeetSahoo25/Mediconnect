@@ -10,6 +10,7 @@ import type {
   ApplyDoctorInput,
   AvailableSlotsQuery,
   ListDoctorsQuery,
+  PendingApplicationsQuery,
   UpdateDoctorProfileInput,
 } from "./doctor.validation.js";
 
@@ -47,6 +48,8 @@ export class DoctorService {
     const where: Prisma.DoctorWhereInput = {
       isActive: true,
       deletedAt: null,
+      licenseVerificationStatus: LicenseStatus.VERIFIED,
+      user: { isActive: true, deletedAt: null },
       ...(specializationId
         ? {
             specializations: {
@@ -60,6 +63,7 @@ export class DoctorService {
               some: {
                 facilityId,
                 isActive: true,
+                facility: { isVerified: true, deletedAt: null },
               },
             },
           }
@@ -107,8 +111,26 @@ export class DoctorService {
     };
   }
 
+  async getPendingApplications(query: PendingApplicationsQuery) {
+    const { page, limit } = query;
+    const { items, total } = await this.doctorRepository.findPendingApplications(
+      (page - 1) * limit,
+      limit,
+    );
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async getDoctor(id: string) {
-    const doctor = await this.doctorRepository.findById(id);
+    const doctor = await this.doctorRepository.findPublicById(id);
 
     if (!doctor) {
       throw new NotFoundError("Doctor not found");
@@ -197,6 +219,11 @@ export class DoctorService {
     }
 
     return doctor;
+  }
+
+  async getMyApplicationStatus(userId: string) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
+    return { hasApplication: doctor !== null };
   }
 
   async updateMyDoctorProfile(userId: string, data: UpdateDoctorProfileInput) {

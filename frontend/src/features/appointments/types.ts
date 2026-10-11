@@ -76,6 +76,7 @@ export interface AppointmentDoctorFacility {
   facility: {
     id: string;
     name: string;
+    timezone: string;
   };
   department: {
     name: string;
@@ -89,6 +90,7 @@ export interface Appointment {
   appointmentType: AppointmentType;
   appointmentModel: AppointmentModel;
   appointmentDate: string;
+  appointmentStartAt: string | null;
   queueNumber: number;
   status: AppointmentStatus;
   reason: string | null;
@@ -131,9 +133,11 @@ export interface AppointmentAvailabilityResponse {
   data: {
     doctorFacilityId: string;
     onlineBookingEnabled: boolean;
+    timezone: string;
     dates: Array<{
       date: string;
-      windows: Array<{
+      slots: Array<{
+        startAt: string;
         startTime: string;
         endTime: string;
       }>;
@@ -143,7 +147,7 @@ export interface AppointmentAvailabilityResponse {
 }
 
 /**
- * Booking draft handed over from the doctor profile page.
+ * Booking context used by the booking page.
  */
 
 export interface BookingDoctorContext {
