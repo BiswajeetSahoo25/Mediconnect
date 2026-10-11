@@ -36,6 +36,43 @@ function getTodayDate() {
   ].join("-");
 }
 
+function getPreviousDate(date: string) {
+  const [year = 1970, month = 1, day = 1] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
+}
+
+function getFacilityTodayDate(timeZone: string) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const part = (type: string) =>
+      parts.find((value) => value.type === type)?.value ?? "";
+    return `${part("year")}-${part("month")}-${part("day")}`;
+  } catch {
+    return getTodayDate();
+  }
+}
+
+function isUpcomingAppointment(appointment: Appointment) {
+  if (appointment.status !== "SCHEDULED") return false;
+  if (appointment.appointmentStartAt) {
+    const startAt = new Date(appointment.appointmentStartAt).getTime();
+    return Number.isFinite(startAt) && startAt > Date.now();
+  }
+
+  return Boolean(
+    appointment.appointmentDate &&
+      appointment.appointmentDate.slice(0, 10) >=
+        getFacilityTodayDate(
+          appointment.doctorFacility?.facility?.timezone ?? "UTC",
+        ),
+  );
+}
+
 function formatDate(value: string | null | undefined) {
   if (!value) return "Date unavailable";
   const datePart = value.split("T")[0];
@@ -49,6 +86,7 @@ function formatDate(value: string | null | undefined) {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -58,7 +96,9 @@ function getAppointmentQuery(filter: AppointmentFilter, page: number) {
       page,
       limit: 10,
       status: "SCHEDULED" as const,
-      from: getTodayDate(),
+      // Include the prior calendar day to account for the facility timezone;
+      // exact filtering below uses the appointment instant when it exists.
+      from: getPreviousDate(getTodayDate()),
     };
   }
 
@@ -181,13 +221,7 @@ function DoctorAppointmentsPage() {
   const visibleAppointments = appointments.filter((appointment) => {
     if (filter === "COMPLETED") return appointment.status === "COMPLETED";
     if (filter === "CANCELLED") return appointment.status === "CANCELLED";
-    if (filter === "UPCOMING") {
-      const appointmentDate = appointment.appointmentDate?.split("T")[0];
-      return (
-        appointment.status === "SCHEDULED" &&
-        Boolean(appointmentDate && appointmentDate >= getTodayDate())
-      );
-    }
+    if (filter === "UPCOMING") return isUpcomingAppointment(appointment);
     return true;
   });
 

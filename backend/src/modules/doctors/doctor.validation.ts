@@ -19,7 +19,8 @@ export const pendingApplicationsQuerySchema = z.object({
 
 export const availableSlotsQuerySchema = z.object({
   doctorFacilityId: z.string().uuid(),
-  date: z.coerce.date(),
+  // A date-only value is interpreted as the facility's local calendar date.
+  date: z.iso.date(),
 });
 
 export const applyDoctorSchema = z.object({

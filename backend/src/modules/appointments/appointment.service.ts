@@ -10,6 +10,7 @@ import {
   assertValidTimeZone,
   buildAppointmentSlots,
   getFacilityLocalDateTime,
+  getWeekdayForLocalDate,
   localDateToDatabaseDate,
 } from "./appointment-time.js";
 
@@ -114,7 +115,7 @@ export class AppointmentService {
         continue;
       }
 
-      const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay();
+      const weekday = getWeekdayForLocalDate(date);
       const windows = assignment.availability.filter(
         (window) => window.dayOfWeek === weekday,
       );
@@ -206,7 +207,7 @@ export class AppointmentService {
       throw new BadRequestError("The doctor is unavailable on the selected date");
     }
 
-    const weekday = new Date(`${localStart.date}T00:00:00.000Z`).getUTCDay();
+    const weekday = getWeekdayForLocalDate(localStart.date);
     const windows = assignment.availability.filter(
       (window) => window.dayOfWeek === weekday,
     );
@@ -251,7 +252,11 @@ export class AppointmentService {
     const patientId = await this.getPatientId(userId);
     const { page, limit, status, from, to } = query;
     const where: Prisma.AppointmentWhereInput = {
-      ...(status ? { status } : {}),
+      ...(status
+        ? {
+            status: Array.isArray(status) ? { in: status } : status,
+          }
+        : {}),
       ...(from || to
         ? {
             appointmentDate: {
@@ -295,7 +300,11 @@ export class AppointmentService {
   async getDoctorAppointments(userId: string, query: ListAppointmentsQuery) {
     const { page, limit, status, from, to } = query;
     const where: Prisma.AppointmentWhereInput = {
-      ...(status ? { status } : {}),
+      ...(status
+        ? {
+            status: Array.isArray(status) ? { in: status } : status,
+          }
+        : {}),
       ...(from || to
         ? {
             appointmentDate: {

@@ -6,6 +6,11 @@ import {
 } from "../../errors/http-errors.js";
 
 import { DoctorRepository } from "./doctor.repository.js";
+import {
+  getFacilityLocalDateTime,
+  getWeekdayForLocalDate,
+  localDateToDatabaseDate,
+} from "../appointments/appointment-time.js";
 import type {
   ApplyDoctorInput,
   AvailableSlotsQuery,
@@ -147,7 +152,7 @@ export class DoctorService {
     const existingDoctor = await this.doctorRepository.findByUserId(userId);
 
     if (existingDoctor) {
-      throw new BadRequestError("Doctor profile already exists for this user");
+      throw new ConflictError("A doctor application already exists for this user");
     }
 
     return this.doctorRepository.createApplication({
@@ -164,15 +169,6 @@ export class DoctorService {
   }
 
   async getAvailableSlots(doctorId: string, query: AvailableSlotsQuery) {
-    const date = startOfDay(query.date);
-    const today = startOfDay(new Date());
-
-    if (date <= today) {
-      throw new BadRequestError(
-        "Availability cannot be requested for today or a past date",
-      );
-    }
-
     const assignment = await this.doctorRepository.findActiveFacilityAssignment(
       query.doctorFacilityId,
     );
@@ -181,10 +177,23 @@ export class DoctorService {
       throw new NotFoundError("Doctor facility assignment not found");
     }
 
+    const today = getFacilityLocalDateTime(
+      new Date(),
+      assignment.facility.timezone,
+    ).date;
+    if (query.date <= today) {
+      throw new BadRequestError(
+        "Availability cannot be requested for today or a past date",
+      );
+    }
+
+    const date = localDateToDatabaseDate(query.date);
+
     if (isDateOnLeave(assignment.doctor.leaves, assignment.leaves, date)) {
       return {
         doctorFacilityId: assignment.id,
-        date,
+        date: query.date,
+        timezone: assignment.facility.timezone,
         windows: [],
         onLeave: true,
         onlineBookingEnabled: assignment.onlineBookingEnabled,
@@ -192,7 +201,7 @@ export class DoctorService {
       };
     }
 
-    const dayOfWeek = date.getUTCDay();
+    const dayOfWeek = getWeekdayForLocalDate(query.date);
 
     const windows = assignment.availability
       .filter((availability) => availability.dayOfWeek === dayOfWeek)
@@ -203,7 +212,8 @@ export class DoctorService {
 
     return {
       doctorFacilityId: assignment.id,
-      date,
+      date: query.date,
+      timezone: assignment.facility.timezone,
       windows,
       onLeave: false,
       onlineBookingEnabled: assignment.onlineBookingEnabled,
@@ -222,8 +232,10 @@ export class DoctorService {
   }
 
   async getMyApplicationStatus(userId: string) {
-    const doctor = await this.doctorRepository.findByUserId(userId);
-    return { hasApplication: doctor !== null };
+    const doctor = await this.doctorRepository.findApplicationStatusByUserId(userId);
+    return {
+      licenseVerificationStatus: doctor?.licenseVerificationStatus ?? null,
+    };
   }
 
   async updateMyDoctorProfile(userId: string, data: UpdateDoctorProfileInput) {

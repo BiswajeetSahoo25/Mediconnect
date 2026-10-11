@@ -9,15 +9,24 @@ import type {
 export interface GetAppointmentsParams {
   page?: number;
   limit?: number;
-  status?: AppointmentStatus;
+  status?: AppointmentStatus | AppointmentStatus[];
   from?: string;
   to?: string;
+}
+
+function serializeListParams(params?: GetAppointmentsParams) {
+  return {
+    ...params,
+    ...(Array.isArray(params?.status)
+      ? { status: params.status.join(",") }
+      : {}),
+  };
 }
 
 export async function getAppointments(params?: GetAppointmentsParams) {
   try {
     const response = await api.get<AppointmentListResponse>("/appointments/me", {
-      params,
+      params: serializeListParams(params),
     });
 
     return response.data;
@@ -30,7 +39,7 @@ export async function getDoctorAppointments(params?: GetAppointmentsParams) {
   try {
     const response = await api.get<AppointmentListResponse>(
       "/appointments/doctor/me",
-      { params },
+      { params: serializeListParams(params) },
     );
 
     return response.data;

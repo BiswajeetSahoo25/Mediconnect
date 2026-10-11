@@ -1,5 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import type { SignupFormData } from "../validators/signup.validator";
+import type { DoctorLicenseStatus } from "../features/doctors/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -187,7 +188,10 @@ export async function createDoctorApplication(data: {
   about?: string;
 }) {
   try {
-    const response = await api.post("/doctors/apply", data);
+    const response = await api.post<{
+      status: "success";
+      data: { licenseVerificationStatus: DoctorLicenseStatus };
+    }>("/doctors/apply", data);
 
     return response.data;
   } catch (error) {

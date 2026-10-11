@@ -25,6 +25,7 @@ export const createAppointmentSchema = z.object({
 
   appointmentModel: z.enum(appointmentModels),
 
+  // The availability API returns this ISO instant; an explicit offset is required.
   appointmentStartAt: z.iso.datetime({ offset: true }).transform((value) => new Date(value)),
 
   reason: z.string().trim().min(1).max(2000).optional(),
@@ -41,7 +42,16 @@ export const doctorFacilityIdSchema = z.object({
 });
 
 export const listAppointmentsQuerySchema = z.object({
-  status: z.enum(appointmentStatuses).optional(),
+  status: z.preprocess(
+    (value) =>
+      typeof value === "string" && value.includes(",")
+        ? value.split(",")
+        : value,
+    z.union([
+      z.enum(appointmentStatuses),
+      z.array(z.enum(appointmentStatuses)).min(1).max(5),
+    ]),
+  ).optional(),
 
   from: z.coerce.date().optional(),
 

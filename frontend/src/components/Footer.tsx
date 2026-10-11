@@ -86,7 +86,7 @@ function SocialButton({ icon, label }: { icon: string; label: string }) {
 }
 
 function Footer() {
-  const { hasDoctorApplication, isDoctor, isPatient, isAuthenticated } = useAuth();
+  const { doctorApplicationStatus, isPatient, isAuthenticated } = useAuth();
 
   return (
     <footer className="bg-[#0f172a]">
@@ -127,7 +127,7 @@ function Footer() {
               links={doctorLinks.filter(
                 (link) =>
                   link.to !== "/apply-as-doctor" ||
-                  (!hasDoctorApplication && !isDoctor && (!isAuthenticated || isPatient)),
+                  (!isAuthenticated || (isPatient && doctorApplicationStatus === null)),
               )}
             />
             <FooterColumn title="About Us" links={aboutLinks} />

@@ -31,6 +31,7 @@ import DoctorsPage from "./features/doctors/pages/DoctorsPage";
 import DoctorProfilePage from "./features/doctors/pages/DoctorProfilePage";
 import BookAppointmentPage from "./features/appointments/pages/BookAppointmentPage";
 import AppointmentsPage from "./features/appointments/pages/AppointmentsPage";
+import AppointmentDetailPage from "./features/appointments/pages/AppointmentDetailPage";
 import DoctorAppointmentsPage from "./features/appointments/pages/DoctorAppointmentsPage";
 import FAQPage from "./pages/FAQPage";
 import HelpPage from "./pages/HelpPage";
@@ -101,7 +102,14 @@ function App() {
                   <Route element={<PatientDashboardRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                   </Route>
-                  <Route element={<ProtectedRoleRoute role="PATIENT" />}>
+                  <Route
+                    element={
+                      <ProtectedRoleRoute
+                        role="PATIENT"
+                        requireNoDoctorApplication
+                      />
+                    }
+                  >
                     <Route
                       path="/apply-as-doctor"
                       element={<DoctorApplicationPage />}
@@ -118,6 +126,10 @@ function App() {
                   <Route
                     path="/appointments"
                     element={<AppointmentsPage />}
+                  />
+                  <Route
+                    path="/appointments/:id"
+                    element={<AppointmentDetailPage />}
                   />
                   <Route
                     path="/records"

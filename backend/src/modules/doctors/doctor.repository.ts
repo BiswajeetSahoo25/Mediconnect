@@ -62,7 +62,7 @@ const publicDoctorDetailSelect = {
       onlineBookingEnabled: true,
       onlineBookingLimit: true,
       joiningDate: true,
-      facility: { select: { id: true, name: true } },
+      facility: { select: { id: true, name: true, timezone: true } },
       department: { select: { id: true, name: true } },
       availability: {
         where: { isActive: true },
@@ -193,6 +193,7 @@ export class DoctorRepository {
         facility: { isVerified: true, deletedAt: null },
       },
       include: {
+        facility: { select: { timezone: true } },
         availability: { where: { isActive: true } },
         leaves: { where: { isApproved: true } },
         doctor: {
@@ -221,6 +222,13 @@ export class DoctorRepository {
   async findByUserId(userId: string) {
     return prisma.doctor.findUnique({
       where: { userId },
+    });
+  }
+
+  async findApplicationStatusByUserId(userId: string) {
+    return prisma.doctor.findUnique({
+      where: { userId },
+      select: { licenseVerificationStatus: true },
     });
   }
 

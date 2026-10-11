@@ -1,5 +1,10 @@
 import { api, handleApiError } from "../../../services/api";
-import type { DoctorListResponse, DoctorResponse, MyDoctorProfile } from "../types";
+import type {
+  DoctorApplicationStatus,
+  DoctorListResponse,
+  DoctorResponse,
+  MyDoctorProfile,
+} from "../types";
 
 export interface GetDoctorsParams {
   page?: number;
@@ -57,6 +62,7 @@ export interface DoctorAvailabilityResponse {
   data: {
     doctorFacilityId: string;
     date: string;
+    timezone: string;
     windows: Array<{
       startTime: string;
       endTime: string;
@@ -128,7 +134,7 @@ export async function getMyDoctorApplicationStatus() {
   try {
     const response = await api.get<{
       status: "success";
-      data: { hasApplication: boolean };
+      data: { licenseVerificationStatus: DoctorApplicationStatus };
     }>("/doctors/application/me");
 
     return response.data.data;

@@ -41,6 +41,7 @@ function formatDateLabel(dateKey: string) {
       weekday: "short",
       day: "numeric",
       month: "short",
+      timeZone: "UTC",
     },
   );
 }

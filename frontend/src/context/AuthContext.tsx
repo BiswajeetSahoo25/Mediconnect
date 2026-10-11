@@ -2,7 +2,11 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { getCurrentUser, logoutUser } from "../services/api";
 import { AuthContext, type User } from "./auth-context";
-import { getMyDoctorApplicationStatus } from "../features/doctors/services/doctor.service";
+import type { DoctorApplicationStatus } from "../features/doctors/types";
+import {
+  getMyDoctorApplicationStatus,
+  getMyDoctorProfile,
+} from "../features/doctors/services/doctor.service";
 
 type AuthProviderProps = {
   children: ReactNode;
@@ -11,21 +15,32 @@ type AuthProviderProps = {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasDoctorApplication, setHasDoctorApplication] = useState(false);
+  const [doctorApplicationStatus, setDoctorApplicationStatus] =
+    useState<DoctorApplicationStatus | undefined>(undefined);
+  const [isDoctorEligible, setIsDoctorEligible] = useState(false);
 
   async function refreshUser() {
     try {
       const result = await getCurrentUser();
-      setUser(result.data.user);
-      try {
-        const application = await getMyDoctorApplicationStatus();
-        setHasDoctorApplication(application.hasApplication);
-      } catch {
-        setHasDoctorApplication(false);
-      }
+      const currentUser = result.data.user as User;
+      const [application, doctorEligibility] = await Promise.all([
+        getMyDoctorApplicationStatus()
+          .then((value) => value.licenseVerificationStatus)
+          .catch(() => undefined),
+        currentUser.role === "DOCTOR"
+          ? getMyDoctorProfile()
+              .then(() => true)
+              .catch(() => false)
+          : Promise.resolve(false),
+      ]);
+
+      setUser(currentUser);
+      setDoctorApplicationStatus(application);
+      setIsDoctorEligible(doctorEligibility);
     } catch {
       setUser(null);
-      setHasDoctorApplication(false);
+      setDoctorApplicationStatus(undefined);
+      setIsDoctorEligible(false);
     }
   }
 
@@ -34,7 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await logoutUser();
     } finally {
       setUser(null);
-      setHasDoctorApplication(false);
+      setDoctorApplicationStatus(undefined);
+      setIsDoctorEligible(false);
     }
   }
 
@@ -65,8 +81,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         isAuthenticated: user !== null,
         isLoading,
-        hasDoctorApplication,
-        isDoctor: user?.role === "DOCTOR",
+        doctorApplicationStatus,
+        isDoctor: user?.role === "DOCTOR" && isDoctorEligible,
         isPatient: user?.role === "PATIENT",
         isAdmin: user?.role === "ADMIN",
         refreshUser,

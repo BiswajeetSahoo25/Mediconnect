@@ -50,16 +50,21 @@ export function getFacilityLocalDateTime(
   assertValidTimeZone(timeZone);
   const parts = getFormatter(timeZone).formatToParts(instant);
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  const year = Number(values.year);
-  const month = Number(values.month);
-  const day = Number(values.day);
   return {
     date: `${values.year}-${values.month}-${values.day}`,
-    weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay(),
+    weekday: getWeekdayForLocalDate(
+      `${values.year}-${values.month}-${values.day}`,
+    ),
     hour: Number(values.hour),
     minute: Number(values.minute),
     second: Number(values.second),
   };
+}
+
+/** Get a weekday from a calendar date without applying the server timezone. */
+export function getWeekdayForLocalDate(date: string) {
+  const [year = 1970, month = 1, day = 1] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
 export function addLocalDays(date: string, days: number) {

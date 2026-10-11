@@ -436,6 +436,11 @@ function DoctorProfilePage() {
 
             {availabilityByDay.length > 0 ? (
               <div className="mt-4 space-y-4">
+                {primaryFacility?.facility.timezone && (
+                  <p className="text-[10px] text-slate-500">
+                    Times shown in {primaryFacility.facility.timezone}
+                  </p>
+                )}
                 {availabilityByDay.map(([dayOfWeek, slots]) => (
                   <div key={dayOfWeek}>
                     <p className="text-[10px] font-semibold text-slate-700">

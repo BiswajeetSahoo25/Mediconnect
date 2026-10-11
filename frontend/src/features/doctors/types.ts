@@ -10,6 +10,15 @@ export interface DoctorSpecialization {
     updatedAt?: string;
   };
 }
+
+export type DoctorLicenseStatus =
+  | "PENDING"
+  | "VERIFIED"
+  | "EXPIRED"
+  | "REVOKED"
+  | "SUSPENDED";
+
+export type DoctorApplicationStatus = DoctorLicenseStatus | null;
 export interface DoctorAvailability {
   id: string;
   doctorFacilityId: string;
@@ -25,6 +34,7 @@ export interface DoctorFacility {
   facility: {
     id: string;
     name: string;
+    timezone?: string;
   };
   departmentId: string;
   department: {

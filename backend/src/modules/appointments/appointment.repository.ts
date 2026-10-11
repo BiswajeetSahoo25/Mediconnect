@@ -300,6 +300,9 @@ export class AppointmentRepository {
             appointmentDate: "desc",
           },
           {
+            appointmentStartAt: { sort: "desc", nulls: "last" },
+          },
+          {
             queueNumber: "desc",
           },
         ],
@@ -355,6 +358,9 @@ export class AppointmentRepository {
         orderBy: [
           {
             appointmentDate: "desc",
+          },
+          {
+            appointmentStartAt: { sort: "desc", nulls: "last" },
           },
           {
             queueNumber: "asc",

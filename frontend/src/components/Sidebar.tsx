@@ -118,7 +118,7 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
 
 function Sidebar() {
   const location = useLocation();
-  const { hasDoctorApplication, isDoctor, isPatient, user } = useAuth();
+  const { doctorApplicationStatus, isDoctor, isPatient, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const navigation = [
@@ -231,7 +231,7 @@ function Sidebar() {
             .filter(
               (item) =>
                 item.path !== "/apply-as-doctor" ||
-                (isPatient && !hasDoctorApplication),
+                (isPatient && doctorApplicationStatus === null),
             )
             .map((item) => {
               const Icon = item.icon;

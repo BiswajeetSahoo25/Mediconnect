@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import type { DoctorApplicationStatus } from "../features/doctors/types";
 
 export type User = {
   id: string;
@@ -17,7 +18,7 @@ export type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  hasDoctorApplication: boolean;
+  doctorApplicationStatus: DoctorApplicationStatus | undefined;
   isDoctor: boolean;
   isPatient: boolean;
   isAdmin: boolean;

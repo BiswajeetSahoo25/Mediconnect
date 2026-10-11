@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, createDoctorApplication } from "../../../services/api";
 import { useAuth } from "../../../hooks/useAuth";
+import type { DoctorLicenseStatus } from "../types";
 
 function DoctorApplicationPage() {
   const { refreshUser } = useAuth();
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedStatus, setSubmittedStatus] = useState<DoctorLicenseStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -14,7 +15,7 @@ function DoctorApplicationPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await createDoctorApplication({
+      const result = await createDoctorApplication({
         firstName: String(form.get("firstName")),
         lastName: String(form.get("lastName")),
         licenseNumber: String(form.get("licenseNumber")),
@@ -23,7 +24,7 @@ function DoctorApplicationPage() {
         about: String(form.get("about")) || undefined,
       });
       await refreshUser();
-      setSubmitted(true);
+      setSubmittedStatus(result.data.licenseVerificationStatus);
     } catch (caughtError) {
       setError(caughtError instanceof ApiError ? caughtError.message : "Could not submit your application.");
     } finally {
@@ -36,10 +37,13 @@ function DoctorApplicationPage() {
       <p className="text-sm font-medium text-teal-700">Professional access</p>
       <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">Apply as a doctor</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">Tell us about your qualifications. Applications are reviewed before a doctor workspace is activated.</p>
-      {submitted ? (
+      {submittedStatus ? (
         <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-          <h3 className="font-semibold text-emerald-900">Application saved for review</h3>
-          <p className="mt-2 text-sm text-emerald-800">Your application is pending review. Your account remains a patient account until an administrator approves your licence.</p>
+          <h3 className="font-semibold text-emerald-900">Application saved</h3>
+          <p className="mt-2 text-sm text-emerald-800">
+            Current verification status: {submittedStatus.toLowerCase()}.
+            {submittedStatus === "PENDING" && " Your account remains a patient account until an administrator approves your licence."}
+          </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2">
