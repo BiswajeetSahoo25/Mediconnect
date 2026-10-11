@@ -28,6 +28,15 @@ const facilities = [
     email: "city.clinic@demo.mediconnect.test",
     timezone: "Asia/Kolkata",
   },
+  {
+    name: "MediConnect Riverside Clinic",
+    description:
+      "Fictional neighborhood clinic used for MediConnect development and testing.",
+    facilityType: "CLINIC",
+    phone: "+91-9000000003",
+    email: "riverside.clinic@demo.mediconnect.test",
+    timezone: "Asia/Kolkata",
+  },
 ];
 
 const departmentNames = [
@@ -122,6 +131,7 @@ async function seedDepartments(facilityId: string) {
 async function seedDoctorRecords(
   adminId: string,
   facilityIds: string[],
+  facilityNames: string[],
   departmentMap: Map<string, string>,
 ) {
   for (let index = 0; index < doctorSeedData.length; index++) {
@@ -244,7 +254,11 @@ async function seedDoctorRecords(
      * --------------------------------------------------
      */
 
-    const facilityId = facilityIds[index % facilityIds.length];
+    const requestedFacilityIndex = facilityNames.indexOf(doctorData.facilityName);
+    const facilityIndex = requestedFacilityIndex >= 0
+      ? requestedFacilityIndex
+      : index % facilityIds.length;
+    const facilityId = facilityIds[facilityIndex];
 
     const departmentId = departmentMap.get(
       `${facilityId}:${doctorData.specialization}`,
@@ -300,33 +314,13 @@ async function seedDoctorRecords(
      * 14:00 - 17:00
      */
 
-    const availability = [
-      {
-        dayOfWeek: 1,
-        startTime: new Date("1970-01-01T09:00:00.000Z"),
-        endTime: new Date("1970-01-01T13:00:00.000Z"),
-      },
-      {
-        dayOfWeek: 2,
-        startTime: new Date("1970-01-01T09:00:00.000Z"),
-        endTime: new Date("1970-01-01T13:00:00.000Z"),
-      },
-      {
-        dayOfWeek: 3,
-        startTime: new Date("1970-01-01T09:00:00.000Z"),
-        endTime: new Date("1970-01-01T13:00:00.000Z"),
-      },
-      {
-        dayOfWeek: 4,
-        startTime: new Date("1970-01-01T09:00:00.000Z"),
-        endTime: new Date("1970-01-01T13:00:00.000Z"),
-      },
-      {
-        dayOfWeek: 5,
-        startTime: new Date("1970-01-01T09:00:00.000Z"),
-        endTime: new Date("1970-01-01T13:00:00.000Z"),
-      },
-    ];
+    const availability = doctorData.availability.flatMap((schedule) =>
+      schedule.daysOfWeek.map((dayOfWeek) => ({
+        dayOfWeek,
+        startTime: new Date(`1970-01-01T${schedule.startTime}:00.000Z`),
+        endTime: new Date(`1970-01-01T${schedule.endTime}:00.000Z`),
+      })),
+    );
 
     for (const slot of availability) {
       await prisma.doctorAvailability.upsert({
@@ -429,6 +423,7 @@ async function seedDoctors() {
   await seedDoctorRecords(
     admin.id,
     seededFacilities.map((facility) => facility.id),
+    facilities.map((facility) => facility.name),
     departmentMap,
   );
   console.log(`Seeded ${doctorSeedData.length} fictional doctors.`);

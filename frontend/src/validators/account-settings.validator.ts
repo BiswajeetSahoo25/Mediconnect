@@ -31,8 +31,10 @@ export const accountSettingsSchema = z.object({
   phone: z
     .string()
     .trim()
-    .min(10, "Phone number must be at least 10 characters")
-    .max(20, "Phone number must be at most 20 characters"),
+    .refine(
+      (phone) => phone.length === 0 || (phone.length >= 10 && phone.length <= 20),
+      "Enter a phone number between 10 and 20 characters",
+    ),
 
   dateOfBirth: z.string().optional(),
 

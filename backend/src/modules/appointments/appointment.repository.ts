@@ -2,7 +2,10 @@
 import { prisma } from "../../config/prisma.js";
 import { mapPrismaError } from "../../errors/error-mapper.js";
 
-import { ConflictError } from "../../errors/http-errors.js";
+import {
+  ConflictError,
+  NotFoundError,
+} from "../../errors/http-errors.js";
 
 function isUniqueConstraintError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -16,11 +19,13 @@ function isUniqueConstraintError(error: unknown): boolean {
       };
     };
   };
+  const cause = value.meta?.driverAdapterError?.cause;
   return (
     value.code === "P2002" ||
+    value.code === "23505" ||
     value.meta?.code === "23505" ||
-    value.meta?.driverAdapterError?.cause?.code === "23505" ||
-    value.meta?.driverAdapterError?.cause?.originalCode === "23505" ||
+    cause?.code === "23505" ||
+    cause?.originalCode === "23505" ||
     (typeof value.message === "string" &&
       value.message.includes("appointments_active_doctor_facility_start_at_key")) ||
     (typeof value.meta?.driverAdapterError?.cause?.originalMessage === "string" &&
@@ -28,6 +33,39 @@ function isUniqueConstraintError(error: unknown): boolean {
         "appointments_active_doctor_facility_start_at_key",
       ))
   );
+}
+
+function isTransactionConflictError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as {
+    code?: unknown;
+    meta?: {
+      code?: unknown;
+      driverAdapterError?: {
+        cause?: { code?: unknown; originalCode?: unknown };
+      };
+    };
+  };
+  const cause = value.meta?.driverAdapterError?.cause;
+  const databaseCodes = [value.code, value.meta?.code, cause?.code, cause?.originalCode];
+  return (
+    value.code === "P2034" ||
+    databaseCodes.some((code) => code === "40001" || code === "40P01")
+  );
+}
+
+function throwBookingConflictOrMappedError(error: unknown): never {
+  if (isUniqueConstraintError(error)) {
+    throw new ConflictError(
+      "This appointment conflicts with another booking. Please select another time.",
+    );
+  }
+  if (isTransactionConflictError(error)) {
+    throw new ConflictError(
+      "This booking conflicted with another request. Please try again.",
+    );
+  }
+  throw mapPrismaError(error);
 }
 
 const appointmentInclude = {
@@ -263,10 +301,44 @@ export class AppointmentRepository {
         });
       });
     } catch (error) {
-      if (isUniqueConstraintError(error)) {
-        throw new ConflictError("This appointment slot is no longer available");
-      }
-      throw mapPrismaError(error);
+      throwBookingConflictOrMappedError(error);
+    }
+  }
+
+  async cancelIfScheduled(
+    id: string,
+    patientId: string,
+    userId: string,
+    reason: string,
+  ) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const transition = await tx.appointment.updateMany({
+          where: { id, patientId, status: "SCHEDULED" },
+          data: {
+            status: "CANCELLED",
+            cancellationReason: reason,
+            cancellationTimestamp: new Date(),
+            cancelledBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        if (transition.count !== 1) {
+          throw new ConflictError(
+            "This appointment is no longer scheduled and cannot be cancelled",
+          );
+        }
+
+        const appointment = await tx.appointment.findFirst({
+          where: { id, patientId },
+          select: appointmentInclude,
+        });
+        if (!appointment) throw new NotFoundError("Appointment not found");
+        return appointment;
+      });
+    } catch (error) {
+      throwBookingConflictOrMappedError(error);
     }
   }
 

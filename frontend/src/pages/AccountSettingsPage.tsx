@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useFieldArray, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -59,7 +59,7 @@ const emptyEmergencyContact = {
   isPrimary: false,
 };
 
-function AccountSettingsPage() {
+function PatientAccountSettingsPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -1277,6 +1277,16 @@ function AccountSettingsPage() {
       </div>
     </main>
   );
+}
+
+function AccountSettingsPage() {
+  const { user } = useAuth();
+
+  if (user?.role === "DOCTOR") {
+    return <Navigate to="/doctor-dashboard" replace />;
+  }
+
+  return <PatientAccountSettingsPage />;
 }
 
 export default AccountSettingsPage;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   getDoctors,
   getSpecializations,
@@ -115,13 +115,14 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 }
 
 export default function DoctorsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specializations, setSpecializations] = useState<SpecializationOption[]>([]);
   const [specializationsLoading, setSpecializationsLoading] = useState(true);
   const [specializationsError, setSpecializationsError] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [specializationId, setSpecializationId] = useState("");
+  const [specializationSearch, setSpecializationSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
@@ -146,6 +147,11 @@ export default function DoctorsPage() {
     };
   }, []);
 
+  const requestedSpecialization = searchParams.get("specialty") ?? searchParams.get("specializationId") ?? "";
+  const specializationId = specializations.find(
+    (item) => item.id === requestedSpecialization || item.name.localeCompare(requestedSpecialization, undefined, { sensitivity: "accent" }) === 0,
+  )?.id ?? "";
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const nextSearch = searchInput.trim();
@@ -159,28 +165,29 @@ export default function DoctorsPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    getDoctors({
-      page: currentPage,
-      limit: PAGE_SIZE,
-      ...(search ? { search } : {}),
-      ...(specializationId ? { specializationId } : {}),
-    })
-      .then((response) => {
+    async function fetchDoctors() {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getDoctors({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          ...(search ? { search } : {}),
+          ...(specializationId ? { specializationId } : {}),
+        });
         if (!active) return;
         setDoctors(response.data.items);
         setTotalResults(response.data.pagination.total);
         setTotalPages(Math.max(1, response.data.pagination.totalPages));
-      })
-      .catch((requestError: unknown) => {
+      } catch (requestError: unknown) {
         if (!active) return;
         console.error("Failed to fetch doctors:", requestError);
         setError("We couldn't load doctors. Check your connection and try again.");
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+    void fetchDoctors();
     return () => {
       active = false;
     };
@@ -194,14 +201,31 @@ export default function DoctorsPage() {
   function clearFilters() {
     setSearchInput("");
     setSearch("");
-    setSpecializationId("");
+    setSpecializationSearch("");
+    setSearchParams({}, { replace: true });
     setCurrentPage(1);
   }
 
+  function chooseSpecialization(id: string) {
+    const selected = specializations.find((item) => item.id === id);
+    const nextParams = new URLSearchParams(searchParams);
+    if (selected) nextParams.set("specialty", selected.name);
+    else {
+      nextParams.delete("specialty");
+      nextParams.delete("specializationId");
+    }
+    setSearchParams(nextParams, { replace: true });
+    setCurrentPage(1);
+  }
+
+  const filteredSpecializations = specializations.filter((item) =>
+    item.name.toLocaleLowerCase().includes(specializationSearch.trim().toLocaleLowerCase()),
+  );
+
   return (
     <main className="min-h-screen bg-slate-50">
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
+      <section className="border-b border-slate-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">
             MediConnect directory
           </p>
@@ -211,62 +235,48 @@ export default function DoctorsPage() {
           <p className="mt-3 max-w-2xl text-slate-600">
             Browse verified healthcare professionals and explore their practice details.
           </p>
-          <label htmlFor="doctor-search" className="sr-only">
-            Search doctors by name or licence number
-          </label>
-          <input
+          <label htmlFor="doctor-search" className="sr-only">Search doctors by name</label>
+          <div className="relative mt-6 max-w-3xl">
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m16 16 4 4" /></svg>
+            </span>
+            <input
             id="doctor-search"
             type="search"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search by doctor name or licence number"
-            className="mt-6 w-full max-w-2xl rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            placeholder="Search doctors by name"
+            className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
+          </div>
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:px-8">
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-semibold text-slate-900">Filters</h2>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-sm font-medium text-blue-700 hover:text-blue-900"
-            >
-              Clear all
-            </button>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section aria-label="Doctor search filters" className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-slate-900">Find the right specialist</h2>
+              <p className="mt-1 text-sm text-slate-500">Choose a clinical specialty to narrow verified doctor results.</p>
+            </div>
+            <button type="button" onClick={clearFilters} className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">Clear filters</button>
           </div>
-          <label htmlFor="specialization-filter" className="mt-5 block text-sm font-medium text-slate-700">
-            Specialization
-          </label>
-          <select
-            id="specialization-filter"
-            value={specializationId}
-            onChange={(event) => {
-              setSpecializationId(event.target.value);
-              setCurrentPage(1);
-            }}
-            disabled={specializationsLoading || specializations.length === 0}
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 disabled:bg-slate-100"
-          >
-            <option value="">All specializations</option>
-            {specializations.map((specialization) => (
-              <option key={specialization.id} value={specialization.id}>
-                {specialization.name}
-              </option>
-            ))}
-          </select>
-          {specializationsError && (
-            <p role="status" className="mt-2 text-xs text-amber-700">
-              Specializations could not be loaded. Search and browsing are still available.
-            </p>
-          )}
-          <p className="mt-4 text-xs leading-5 text-slate-500">
-            Filters are limited to search and specializations supported by the doctor directory.
-          </p>
-        </aside>
-
+          <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(220px,0.8fr)_minmax(260px,1.2fr)]">
+            <div>
+              <label htmlFor="specialization-search" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search specialties</label>
+              <input id="specialization-search" type="search" value={specializationSearch} onChange={(event) => setSpecializationSearch(event.target.value)} placeholder="e.g. heart, skin, children" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+            </div>
+            <div>
+              <label htmlFor="specialization-filter" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Specialization</label>
+              <select id="specialization-filter" value={specializationId} onChange={(event) => chooseSpecialization(event.target.value)} disabled={specializationsLoading || specializations.length === 0} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-100">
+                <option value="">All specialties</option>
+                {filteredSpecializations.map((specialization) => <option key={specialization.id} value={specialization.id}>{specialization.name}</option>)}
+              </select>
+            </div>
+          </div>
+          {specializationsError && <p role="status" className="mt-3 text-sm text-amber-700">Specialties could not be loaded. Name search and browsing are still available.</p>}
+          {specializationId && <p className="mt-3 text-sm text-slate-600">Showing doctors specializing in <span className="font-semibold text-blue-700">{specializations.find((item) => item.id === specializationId)?.name}</span></p>}
+        </section>
         <section aria-labelledby="doctor-results-heading">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>

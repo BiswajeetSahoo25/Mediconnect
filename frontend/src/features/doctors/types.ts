@@ -96,3 +96,40 @@ export interface MyDoctorProfile {
   about: string | null;
   isActive: boolean;
 }
+
+export interface DoctorPracticeWindowInput {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface DoctorPracticeWindow extends DoctorPracticeWindowInput {
+  id: string;
+  isActive: boolean;
+}
+
+export interface DoctorPracticeFacility {
+  id: string;
+  facilityId: string;
+  facility: DoctorFacility["facility"];
+  departmentId: string;
+  department: DoctorFacility["department"];
+  consultationFee: string;
+  consultationMode: string;
+  onlineBookingEnabled: boolean;
+  onlineBookingLimit: number | null;
+  joiningDate: string;
+  availability: DoctorPracticeWindow[];
+}
+
+export interface DoctorPracticeFacilityOption {
+  id: string;
+  name: string;
+  timezone: string;
+  departments: Array<{ id: string; name: string }>;
+}
+
+export interface MyDoctorPractice {
+  facilities: DoctorPracticeFacilityOption[];
+  assignments: DoctorPracticeFacility[];
+}

@@ -12,11 +12,15 @@ import { requireVerifiedDoctor } from "../../middleware/verified-doctor.middlewa
 import {
   applyDoctorSchema,
   availableSlotsQuerySchema,
+  createDoctorPracticeFacilitySchema,
+  doctorFacilityAssignmentIdSchema,
   doctorIdSchema,
   listDoctorsQuerySchema,
   pendingApplicationsQuerySchema,
   revokeDoctorSchema,
+  updateDoctorPracticeFacilitySchema,
   updateDoctorProfileSchema,
+  updateDoctorSpecializationsSchema,
 } from "./doctor.validation.js";
 
 const router = Router();
@@ -67,6 +71,44 @@ router.patch(
   requireVerifiedDoctor,
   validate({ body: updateDoctorProfileSchema }),
   doctorController.updateMyDoctorProfile.bind(doctorController),
+);
+
+router.get(
+  "/me/practice",
+  requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
+  doctorController.getMyPractice.bind(doctorController),
+);
+
+router.post(
+  "/me/practice/facilities",
+  requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
+  validate({ body: createDoctorPracticeFacilitySchema }),
+  doctorController.addMyPracticeFacility.bind(doctorController),
+);
+
+router.patch(
+  "/me/practice/facilities/:doctorFacilityId",
+  requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
+  validate({
+    params: doctorFacilityAssignmentIdSchema,
+    body: updateDoctorPracticeFacilitySchema,
+  }),
+  doctorController.updateMyPracticeFacility.bind(doctorController),
+);
+
+router.put(
+  "/me/specializations",
+  requireAuth,
+  requireRole(UserRole.DOCTOR),
+  requireVerifiedDoctor,
+  validate({ body: updateDoctorSpecializationsSchema }),
+  doctorController.updateMySpecializations.bind(doctorController),
 );
 
 // Admin-only doctor application approval

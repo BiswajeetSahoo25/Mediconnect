@@ -8,10 +8,14 @@ import { DoctorService } from "./doctor.service.js";
 import type {
   ApplyDoctorInput,
   AvailableSlotsQuery,
+  CreateDoctorPracticeFacilityInput,
+  DoctorFacilityAssignmentIdInput,
   DoctorIdInput,
   ListDoctorsQuery,
   PendingApplicationsQuery,
   RevokeDoctorInput,
+  UpdateDoctorSpecializationsInput,
+  UpdateDoctorPracticeFacilityInput,
   UpdateDoctorProfileInput,
 } from "./doctor.validation.js";
 
@@ -134,6 +138,55 @@ export class DoctorController {
       status: "success",
       data: doctor,
     });
+  }
+
+  async getMyPractice(req: Request, res: Response) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    const practice = await doctorService.getMyPractice(userId);
+    return res.status(200).json({ status: "success", data: practice });
+  }
+
+  async addMyPracticeFacility(req: Request, res: Response) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    const assignment = await doctorService.addMyPracticeFacility(
+      userId,
+      req.validated.body as CreateDoctorPracticeFacilityInput,
+    );
+    return res.status(201).json({ status: "success", data: assignment });
+  }
+
+  async updateMyPracticeFacility(req: Request, res: Response) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+    const { doctorFacilityId } = req.validated.params as DoctorFacilityAssignmentIdInput;
+    const assignment = await doctorService.updateMyPracticeFacility(
+      userId,
+      doctorFacilityId,
+      req.validated.body as UpdateDoctorPracticeFacilityInput,
+    );
+    return res.status(200).json({ status: "success", data: assignment });
+  }
+
+  async updateMySpecializations(req: Request, res: Response) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+    const specializations = await doctorService.updateMySpecializations(
+      userId,
+      req.validated.body as UpdateDoctorSpecializationsInput,
+    );
+    return res.status(200).json({ status: "success", data: specializations });
   }
 
   async approveDoctor(req: Request, res: Response) {

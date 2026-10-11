@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, handleApiError } from "./api";
 
 export interface CurrentUser {
   id: string;
@@ -24,15 +24,21 @@ export interface UpdateCurrentUserInput {
 }
 
 export async function getCurrentUser(): Promise<CurrentUserResponse> {
-  const response = await api.get<CurrentUserResponse>("/users/me");
-
-  return response.data;
+  try {
+    const response = await api.get<CurrentUserResponse>("/users/me");
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 export async function updateCurrentUser(
   data: UpdateCurrentUserInput,
 ): Promise<CurrentUserResponse> {
-  const response = await api.patch<CurrentUserResponse>("/users/me", data);
-
-  return response.data;
+  try {
+    const response = await api.patch<CurrentUserResponse>("/users/me", data);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }

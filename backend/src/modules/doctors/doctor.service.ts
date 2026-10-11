@@ -14,10 +14,27 @@ import {
 import type {
   ApplyDoctorInput,
   AvailableSlotsQuery,
+  CreateDoctorPracticeFacilityInput,
   ListDoctorsQuery,
   PendingApplicationsQuery,
+  UpdateDoctorSpecializationsInput,
+  UpdateDoctorPracticeFacilityInput,
   UpdateDoctorProfileInput,
 } from "./doctor.validation.js";
+
+function toDatabaseTime(time: string) {
+  return new Date(`1970-01-01T${time}:00.000Z`);
+}
+
+function toDatabaseAvailability(
+  windows: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [],
+) {
+  return windows.map((window) => ({
+    dayOfWeek: window.dayOfWeek,
+    startTime: toDatabaseTime(window.startTime),
+    endTime: toDatabaseTime(window.endTime),
+  }));
+}
 
 function startOfDay(date: Date) {
   return new Date(
@@ -264,6 +281,93 @@ export class DoctorService {
     }
 
     return this.doctorRepository.update(doctor.id, updateData);
+  }
+
+  async getMyPractice(userId: string) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
+    if (!doctor) {
+      throw new NotFoundError("Doctor profile not found");
+    }
+
+    const [facilities, assignments] = await Promise.all([
+      this.doctorRepository.findPracticeFacilities(),
+      this.doctorRepository.findPracticeByDoctorId(doctor.id),
+    ]);
+
+    return { facilities, assignments };
+  }
+
+  async addMyPracticeFacility(
+    userId: string,
+    input: CreateDoctorPracticeFacilityInput,
+  ) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
+    if (!doctor) {
+      throw new NotFoundError("Doctor profile not found");
+    }
+    return this.doctorRepository.createOrRestorePracticeFacility({
+      doctorId: doctor.id,
+      facilityId: input.facilityId,
+      departmentId: input.departmentId,
+      consultationFee: input.consultationFee,
+      consultationMode: input.consultationMode,
+      onlineBookingEnabled: input.onlineBookingEnabled,
+      onlineBookingLimit: input.onlineBookingLimit,
+      joiningDate: input.joiningDate
+        ? new Date(`${input.joiningDate}T00:00:00.000Z`)
+        : new Date(new Date().toISOString().slice(0, 10)),
+      updatedBy: userId,
+      availability: toDatabaseAvailability(input.availability),
+    });
+  }
+
+  async updateMyPracticeFacility(
+    userId: string,
+    assignmentId: string,
+    input: UpdateDoctorPracticeFacilityInput,
+  ) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
+    if (!doctor) {
+      throw new NotFoundError("Doctor profile not found");
+    }
+
+    return this.doctorRepository.updatePracticeFacility(
+      doctor.id,
+      assignmentId,
+      {
+        ...(input.consultationFee !== undefined
+          ? { consultationFee: input.consultationFee }
+          : {}),
+        ...(input.consultationMode !== undefined
+          ? { consultationMode: input.consultationMode }
+          : {}),
+        ...(input.onlineBookingEnabled !== undefined
+          ? { onlineBookingEnabled: input.onlineBookingEnabled }
+          : {}),
+        ...(input.onlineBookingLimit !== undefined
+          ? { onlineBookingLimit: input.onlineBookingLimit }
+          : {}),
+        ...(input.availability !== undefined
+          ? { availability: toDatabaseAvailability(input.availability) }
+          : {}),
+        updatedBy: userId,
+      },
+    );
+  }
+
+  async updateMySpecializations(
+    userId: string,
+    input: UpdateDoctorSpecializationsInput,
+  ) {
+    const doctor = await this.doctorRepository.findByUserId(userId);
+    if (!doctor) {
+      throw new NotFoundError("Doctor profile not found");
+    }
+    return this.doctorRepository.replaceSpecializations(
+      doctor.id,
+      input.specializationIds,
+      input.primarySpecializationId,
+    );
   }
 
   async approveDoctor(doctorId: string, adminUserId: string) {

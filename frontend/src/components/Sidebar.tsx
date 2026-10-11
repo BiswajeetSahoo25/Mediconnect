@@ -258,19 +258,21 @@ function Sidebar() {
             })}
         </div>
 
-        <div className="mt-auto border-t border-slate-100 pt-4">
-          <Link
-            to="/account"
-            title={collapsed ? "Account settings" : undefined}
-            className={`flex items-center rounded-xl py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 ${
-              collapsed ? "justify-center px-0" : "gap-3 px-3"
-            }`}
-          >
-            <SettingsIcon className="h-5 w-5 shrink-0" />
+        {isPatient && (
+          <div className="mt-auto border-t border-slate-100 pt-4">
+            <Link
+              to="/account"
+              title={collapsed ? "Account settings" : undefined}
+              className={`flex items-center rounded-xl py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 ${
+                collapsed ? "justify-center px-0" : "gap-3 px-3"
+              }`}
+            >
+              <SettingsIcon className="h-5 w-5 shrink-0" />
 
-            {!collapsed && <span>Account settings</span>}
-          </Link>
-        </div>
+              {!collapsed && <span>Account settings</span>}
+            </Link>
+          </div>
+        )}
       </nav>
     </aside>
   );

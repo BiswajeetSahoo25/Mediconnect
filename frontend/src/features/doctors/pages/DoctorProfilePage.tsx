@@ -13,6 +13,26 @@ const tabs = [
   "Availability",
 ];
 
+type DetailIconKind = "license" | "specialization" | "facility" | "experience";
+
+function DetailIcon({ kind }: { kind: DetailIconKind }) {
+  const paths: Record<DetailIconKind, React.ReactNode> = {
+    license: <><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></>,
+    specialization: <><path d="M4 8h5l3 3 3-3h5" /><path d="M7 8V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" /><path d="M8 14a4 4 0 1 0 8 0" /><path d="M12 14v7" /></>,
+    facility: <><path d="M3 21h18" /><path d="M5 21V5l7-3 7 3v16" /><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01" /><path d="M10 21v-4h4v4" /></>,
+    experience: <><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18m-11 0v2h4v-2" /></>,
+  };
+
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">{paths[kind]}</svg>;
+}
+
+function formatConsultationFee(value: string) {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount)
+    : "Not available";
+}
+
 function formatDay(dayOfWeek: number) {
   const days = [
     "Sunday",
@@ -147,11 +167,11 @@ function DoctorProfilePage() {
           Find Doctors
         </Link>
 
-        <span>â€º</span>
+        <span aria-hidden="true">/</span>
 
         <span>{primarySpecialization?.specialization.name ?? "Specialist"}</span>
 
-        <span>â€º</span>
+        <span aria-hidden="true">/</span>
 
         <span className="text-slate-700">{doctorName}</span>
       </div>
@@ -173,7 +193,7 @@ function DoctorProfilePage() {
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {doctor.licenseVerificationStatus === "VERIFIED" && (
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                  âœ“ Verified Specialist
+                  <span className="mr-1" aria-hidden="true">✓</span>Verified specialist
                 </span>
               )}
 
@@ -191,7 +211,7 @@ function DoctorProfilePage() {
             <p className="mt-1 text-sm font-medium text-blue-600">
               {primarySpecialization?.specialization.name ?? "Specialist"}
               {primaryFacility?.facility.name
-                ? ` Â· ${primaryFacility.facility.name}`
+                ? ` | ${primaryFacility.facility.name}`
                 : ""}
             </p>
 
@@ -216,7 +236,7 @@ function DoctorProfilePage() {
 
                 <p className="mt-1 text-sm font-medium text-slate-800">
                   {primaryFacility
-                    ? `â‚¹${primaryFacility.consultationFee}`
+                    ? formatConsultationFee(primaryFacility.consultationFee)
                     : "Not available"}
                 </p>
               </div>
@@ -241,13 +261,6 @@ function DoctorProfilePage() {
                 Book Appointment
               </Link>
 
-              <button
-                type="button"
-                aria-label="Message doctor"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50"
-              >
-                â–¡
-              </button>
             </div>
           </div>
         </div>
@@ -269,9 +282,6 @@ function DoctorProfilePage() {
             >
               {tab}
 
-              {tab === "Reviews" && (
-                <span className="ml-1 text-[10px] text-slate-400">â€”</span>
-              )}
             </button>
           ))}
         </div>
@@ -300,8 +310,8 @@ function DoctorProfilePage() {
 
             <div className="mt-5 space-y-5">
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  âœ“
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <DetailIcon kind="license" />
                 </div>
 
                 <div>
@@ -316,8 +326,8 @@ function DoctorProfilePage() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  âœ“
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <DetailIcon kind="license" />
                 </div>
 
                 <div>
@@ -332,8 +342,8 @@ function DoctorProfilePage() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  ðŸŽ“
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <DetailIcon kind="specialization" />
                 </div>
 
                 <div>
@@ -355,8 +365,8 @@ function DoctorProfilePage() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  ðŸ¥
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <DetailIcon kind="facility" />
                 </div>
 
                 <div>
@@ -378,8 +388,8 @@ function DoctorProfilePage() {
 
             <div className="mt-5">
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600">
-                  ðŸ©º
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <DetailIcon kind="experience" />
                 </div>
 
                 <div>

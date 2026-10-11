@@ -1,4 +1,4 @@
-import { api } from "../../../services/api";
+import { api, handleApiError } from "../../../services/api";
 
 export interface Patient {
   id: string;
@@ -31,15 +31,21 @@ export interface UpdatePatientInput {
 }
 
 export async function getPatient(): Promise<PatientResponse> {
-  const response = await api.get<PatientResponse>("/patients/me");
-
-  return response.data;
+  try {
+    const response = await api.get<PatientResponse>("/patients/me");
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }
 
 export async function updatePatient(
   data: UpdatePatientInput,
 ): Promise<PatientResponse> {
-  const response = await api.patch<PatientResponse>("/patients/me", data);
-
-  return response.data;
+  try {
+    const response = await api.patch<PatientResponse>("/patients/me", data);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
 }

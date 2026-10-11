@@ -285,16 +285,12 @@ export class AppointmentService {
     input: CancelAppointmentInput,
   ) {
     const appointment = await this.getById(userId, appointmentId);
-    if (appointment.status !== "SCHEDULED") {
-      throw new BadRequestError("Only scheduled appointments can be cancelled");
-    }
-    return this.appointmentRepository.update(appointment.id, {
-      status: "CANCELLED",
-      cancellationReason: input.reason,
-      cancellationTimestamp: new Date(),
-      cancelledByUser: { connect: { id: userId } },
-      updatedByUser: { connect: { id: userId } },
-    });
+    return this.appointmentRepository.cancelIfScheduled(
+      appointment.id,
+      appointment.patientId,
+      userId,
+      input.reason,
+    );
   }
 
   async getDoctorAppointments(userId: string, query: ListAppointmentsQuery) {
