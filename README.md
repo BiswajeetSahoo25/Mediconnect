@@ -179,20 +179,30 @@ Open the URL printed by Vite, usually <http://localhost:5173>. Keep both develop
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `NODE_ENV` | Yes | Use `development` locally. |
-| `PORT` | Yes | API port; normally `3000`. |
+| `NODE_ENV` | Yes | One of `development`, `test`, or `production`; use `development` locally. |
+| `PORT` | Yes | Integer from `1` to `65535`; normally `3000`. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string, for example `postgresql://postgres:password@localhost:5432/mediconnect`. |
 | `FRONTEND_URL` | Yes | Exact frontend origin allowed by CORS; normally `http://localhost:5173`. |
-| `JWT_ACCESS_SECRET` | Yes | Long, random secret used to sign access tokens. Do not use the example value in a deployed environment. |
-| `JWT_ACCESS_EXPIRES_IN` | Yes | Access-token lifetime, for example `15m`. |
-| `REFRESH_TOKEN_EXPIRES_IN_DAYS` | Yes | Refresh-token lifetime in days, for example `30`. |
+| `JWT_ACCESS_SECRET` | Yes | Secret used to sign access tokens. In production it must be at least 32 UTF-8 bytes and cannot be an obvious placeholder or low-variety default. |
+| `JWT_ACCESS_EXPIRES_IN` | Yes | Positive access-token lifetime; use a JOSE time span such as `15m`, `2 hours`, or `1 day`. |
+| `REFRESH_TOKEN_EXPIRES_IN_DAYS` | Yes | Positive integer number of days, for example `30`. |
 | `GEOAPIFY_API_KEY` | Yes | Geoapify key used by healthcare-facility and location search. |
 | `OPENFDA_API_KEY` | No | Optional key for openFDA requests; the code can call openFDA without it. |
 | `SEED_ADMIN_EMAIL` | For admin/article/doctor seeds | Email for the local development admin created or reused by those seeds. |
 | `SEED_ADMIN_PASSWORD` | For admin/article/doctor seeds | Local development admin password. Choose your own value. |
-| `SEED_DOCTOR_PASSWORD` | No | Password for fictional seeded doctors; defaults to `DemoDoctor@123` when unset. Set a private local value if using the seed accounts. |
+| `SEED_DOCTOR_PASSWORD` | For doctor seeds | Password for fictional seeded doctors. Set a private local value before running the seed; the template value is only a reminder. |
 
 Keep real `.env` files and credentials out of Git. Only use development seed accounts and credentials with local development data.
+
+`backend/.env.example` is a development template, not a production configuration. The runtime rejects placeholder values for production credentials and requires a strong access-token secret. Generate a secret, then put it directly into your deployment secret manager (do not commit it):
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
+```
+
+The generated value is 48 random bytes encoded as text. Keep `OPENFDA_API_KEY` empty when you do not use that optional service.
+
+For local setup, copy `backend/.env.example` to `backend/.env`, then replace its database password, Geoapify key, JWT secret, and seed credential placeholders with private development values. The seed scripts reject missing or placeholder passwords. Seed passwords are examples only; do not use them outside a disposable local database.
 
 ### Frontend (`frontend/.env`)
 
@@ -232,12 +242,16 @@ Run commands from the relevant package directory.
 | `npm run build` | Compile TypeScript into `backend/dist`. |
 | `npm start` | Run the compiled API. Build first. |
 | `npm run typecheck` | Type-check without emitting files. |
+| `npm run test:env` | Run isolated environment-validation tests; no database is required. |
+| `npm run test:error-middleware` | Run HTTP error response regression tests. |
+| `npm run test:security` | Run authentication and security regression tests; database cases are skipped unless explicitly enabled. |
+| `npm run test:appointment-time` | Run deterministic appointment timezone and slot-generation tests. |
 | `npx prisma migrate deploy` | Apply committed migrations. |
 | `npx prisma generate` | Generate the Prisma client. |
 | `npm run seed:specializations` | Seed the specialization catalog. |
 | `npm run seed:doctors` | Seed fictional doctor and facility data. |
 | `npm run seed:articles` | Seed articles and the development admin. |
-| `npm run test:appointment-integrity` | Run the appointment integrity integration test; requires a configured PostgreSQL test database. |
+| `npm run test:appointment-integrity` | Run appointment integrity tests; database cases require explicit opt-in and a dedicated local PostgreSQL database whose name contains `test`. |
 
 ### Frontend (`frontend/`)
 
@@ -248,6 +262,9 @@ Run commands from the relevant package directory.
 | `npm run preview` | Serve the last production build locally. |
 | `npm run typecheck` | Type-check without creating a production bundle. |
 | `npm run lint` | Run ESLint. |
+| `npm run test:homepage-navigation` | Run homepage navigation and search URL tests. |
+
+Database integration tests must never target a production or shared database. For appointment integrity tests, set `NODE_ENV=test`, point `DATABASE_URL` at a dedicated local database with `test` in its name, and set `RUN_APPOINTMENT_INTEGRATION_TESTS=1`. Medical-record database tests use the same safeguards with `RUN_SECURITY_INTEGRATION_TESTS=1`. Both suites skip database work by default.
 
 The root `npm test` script is currently a placeholder; use the package-level commands above.
 
@@ -314,7 +331,9 @@ The backend API is versioned under `/api/v1`. Useful route groups include:
 
 ### Backend exits with “Missing required environment variable”
 
-Confirm that `backend/.env` exists and includes all required variables listed above. In particular, the backend requires `REFRESH_TOKEN_EXPIRES_IN_DAYS` (not `REFRESH_TOKEN_EXPIRES_IN`). Restart the backend after changing environment variables.
+Confirm that `backend/.env` exists and includes all required variables listed above. `NODE_ENV` must be `development`, `test`, or `production`; `PORT` must be an integer from `1` to `65535`; and `REFRESH_TOKEN_EXPIRES_IN_DAYS` must be a positive integer day count, for example `30`. Restart the backend after changing environment variables.
+
+For production startup, replace all template credentials. `JWT_ACCESS_SECRET` must contain at least 32 UTF-8 bytes and have varied characters; obvious placeholders in production credentials are rejected. Generate and store secrets in the deployment platform, not in Git.
 
 ### Database connection or Prisma migration errors
 

@@ -8,6 +8,9 @@ function DoctorWorkspaceLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <a href="#main-content" className="sr-only z-50 rounded-lg bg-white px-4 py-3 font-semibold text-blue-800 shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Skip to main content
+      </a>
       <header className="border-b border-slate-200 bg-white">
         <div className="flex h-[72px] items-center justify-between px-5 lg:px-8">
           <Link
@@ -66,8 +69,10 @@ function DoctorWorkspaceLayout() {
       </header>
       <div className="flex">
         <DoctorWorkspaceSidebar />
-        <main className="min-w-0 flex-1 p-5 sm:p-7 lg:p-9">
-          <Outlet />
+        <main id="main-content" className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 xl:p-9">
+          <div className="page-shell min-w-0">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

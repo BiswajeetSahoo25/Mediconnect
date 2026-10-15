@@ -256,7 +256,7 @@ function HealthArticlesPage() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <div className="flex gap-2 overflow-x-auto pb-2">
           {categories.map((category) => {
             const isSelected = selectedCategory === category;
@@ -448,7 +448,7 @@ function HealthArticlesPage() {
             )}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

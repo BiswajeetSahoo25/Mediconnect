@@ -377,9 +377,9 @@ export default function MedicalRecordsPage() {
           </section>
         </div>
       )}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="page-heading flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-blue-700">
+          <p className="page-eyebrow">
             Your health information
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
@@ -395,7 +395,7 @@ export default function MedicalRecordsPage() {
         </span>
       </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <section className="surface-card p-5 sm:p-7">
         <div className="mb-5">
           <h2 className="text-lg font-semibold text-slate-900">
             Add a medical record

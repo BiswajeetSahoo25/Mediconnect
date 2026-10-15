@@ -77,6 +77,16 @@ export function localDateToDatabaseDate(date: string) {
   return new Date(`${date}T00:00:00.000Z`);
 }
 
+/** Booking dates are the next seven calendar days in the facility's timezone. */
+export function getFacilityBookingDateWindow(now: Date, timeZone: string) {
+  const today = getFacilityLocalDateTime(now, timeZone).date;
+  return {
+    today,
+    firstDate: addLocalDays(today, 1),
+    lastDate: addLocalDays(today, 7),
+  };
+}
+
 function parseAvailabilityTime(value: Date) {
   return value.getUTCHours() * 60 + value.getUTCMinutes();
 }

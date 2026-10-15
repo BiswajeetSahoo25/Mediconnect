@@ -189,7 +189,7 @@ function ArticlePage() {
       </section>
       
 
-      <main className="mx-auto max-w-4xl px-5 py-12 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-4xl px-5 py-12 lg:px-8 lg:py-16">
         <article className="font-['DM_Sans'] text-base leading-8 text-slate-700">
           <div className="whitespace-pre-line">{article.content}</div>
 
@@ -232,7 +232,7 @@ function ArticlePage() {
             </p>
           </div>
         </article>
-      </main>
+      </div>
 
       {relatedArticles.length > 0 && (
         <section className="border-t border-slate-200 bg-white">

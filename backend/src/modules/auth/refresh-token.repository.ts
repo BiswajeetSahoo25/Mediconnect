@@ -27,6 +27,13 @@ export class RefreshTokenRepository {
     });
   }
 
+  async revokeIfActive(id: string, now = new Date()) {
+    return prisma.refreshToken.updateMany({
+      where: { id, revokedAt: null, expiresAt: { gt: now } },
+      data: { revokedAt: now },
+    });
+  }
+
   async revokeAllForUser(userId: string) {
     return prisma.refreshToken.updateMany({
       where: {

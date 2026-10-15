@@ -17,8 +17,10 @@ const medicalRecordListSelect = {
 } satisfies Prisma.MedicalDocumentSelect;
 
 export class MedicalRecordRepository {
+  constructor(private readonly database = prisma) {}
+
   async findManyByPatientId(patientId: string) {
-    return prisma.medicalDocument.findMany({
+    return this.database.medicalDocument.findMany({
       where: { patientId },
       select: medicalRecordListSelect,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -27,7 +29,7 @@ export class MedicalRecordRepository {
 
   async create(data: Prisma.MedicalDocumentCreateInput) {
     try {
-      return await prisma.medicalDocument.create({
+      return await this.database.medicalDocument.create({
         data,
         select: medicalRecordListSelect,
       });
@@ -37,7 +39,7 @@ export class MedicalRecordRepository {
   }
 
   async findFileById(id: string, patientId: string) {
-    return prisma.medicalDocument.findFirst({
+    return this.database.medicalDocument.findFirst({
       where: { id, patientId },
       select: {
         id: true,
@@ -50,7 +52,7 @@ export class MedicalRecordRepository {
 
   async deleteOwned(id: string, patientId: string, userId: string) {
     try {
-      return await prisma.medicalDocument.deleteMany({
+      return await this.database.medicalDocument.deleteMany({
         where: { id, patientId, uploadedBy: userId, isVerified: false },
       });
     } catch (error) {
@@ -59,7 +61,7 @@ export class MedicalRecordRepository {
   }
 
   async findByIdForOwner(id: string, patientId: string, userId: string) {
-    return prisma.medicalDocument.findFirst({
+    return this.database.medicalDocument.findFirst({
       where: { id, patientId, uploadedBy: userId },
       select: { id: true, isVerified: true },
     });

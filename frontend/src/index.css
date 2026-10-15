@@ -1,6 +1,46 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap");
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #1769d2;
+  --color-blue-700: #1a73e8;
+  --color-blue-800: #155fc4;
+  --color-blue-900: #1055b2;
+  --color-blue-950: #0c3a76;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-500: #1a73e8;
+  --color-brand-600: #1769d2;
+  --color-brand-700: #1558b0;
+  --color-brand-800: #124992;
+  --color-ink: #13243a;
+  --color-muted: #64748b;
+  --color-line: #e3eaf2;
+  --color-canvas: #f6f9fc;
+  --color-success: #15803d;
+  --color-success-soft: #f0fdf4;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #be123c;
+  --color-danger-soft: #fff1f2;
+  --color-info: #1769d2;
+  --color-info-soft: #eff6ff;
+  --spacing-page: clamp(1rem, 4vw, 2.5rem);
+  --spacing-section: clamp(2.5rem, 6vw, 5rem);
+  --radius-card: 1rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 8px 24px rgb(15 23 42 / 4%);
+  --duration-ui: 180ms;
+}
+
 :root {
   font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   color: #13243a;
@@ -17,6 +57,7 @@
   --color-muted: #64748b;
   --color-line: #e3eaf2;
   --color-canvas: #f6f9fc;
+  --color-surface: #ffffff;
   --focus-ring: 0 0 0 4px rgb(23 105 210 / 15%);
 }
 
@@ -33,6 +74,81 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   line-height: 1.5;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    text-underline-offset: 0.18em;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    border-radius: 0.75rem;
+    border-color: var(--color-line);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .page-shell {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  .public-page-shell {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
+  }
+
+  .page-heading {
+    margin-bottom: 1.75rem;
+  }
+
+  .page-eyebrow {
+    color: var(--color-brand);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+  }
+
+  .surface-card {
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+  }
+
+  .status-panel {
+    border-radius: 0.875rem;
+    padding: 1rem 1.25rem;
+  }
+
+  :where(button, input, select, textarea):disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
 }
 
 button,
@@ -69,6 +185,11 @@ button:disabled {
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
+  accent-color: var(--color-brand);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: var(--color-brand);
 }
 

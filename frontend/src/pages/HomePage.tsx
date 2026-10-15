@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { getArticles } from "../features/articles";
 import type { ArticlePreview } from "../features/articles";
 import { getDoctors } from "../features/doctors";
 import type { Doctor } from "../features/doctors/types";
 import { search } from "../assets/icons";
 import * as homeIcons from "../assets/homePageIcons";
+import {
+  buildDoctorDirectorySearchPath,
+  MAX_DOCTOR_SEARCH_LENGTH,
+  validateDoctorSearch,
+} from "../features/doctors/doctorSearch";
+import { homepageActionDestinations } from "./homepageActions";
 
 const heroImage =
   "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
@@ -25,38 +31,38 @@ const arrowRightIcon = homeIcons.arrowRightSvg;
 const quickActions = [
   {
     title: "Find a Doctor",
-    description: "Book physical visits with clinical experts nearby.",
-    action: "Consult now",
+    description: "Browse verified doctor profiles and their listed practice facilities.",
+    action: "Browse doctors",
     icon: ambulanceIcon,
-    to: "/doctors",
+    to: homepageActionDestinations.findDoctor,
   },
   {
     title: "Video Consultation",
-    description: "Connect instantly with doctors in under 10 minutes.",
-    action: "Consult now",
+    description: "Explore doctors and check whether a facility supports online video visits and booking.",
+    action: "Explore doctors",
     icon: videoIcon,
-    to: "/doctors",
+    to: homepageActionDestinations.videoConsultation,
   },
   {
     title: "Diagnostic Tests",
-    description: "Reliable lab tests done from the comfort of home.",
-    action: "Consult now",
+    description: "Diagnostic test booking is not currently available on MediConnect.",
+    action: "Coming soon",
     icon: testIcon,
-    to: "/doctors",
+    to: homepageActionDestinations.diagnosticTests,
   },
   {
-    title: "Pharmacies",
-    description: "Get prescription medications delivered in 2 hours.",
-    action: "Explore",
+    title: "Medicine Information",
+    description: "Search medicine labels, ingredients, uses, and safety information.",
+    action: "Browse medicines",
     icon: pillIcon,
-    to: "/medicines",
+    to: homepageActionDestinations.medicines,
   },
   {
     title: "Health Checkups",
-    description: "Comprehensive screenings for the entire family.",
-    action: "Explore",
+    description: "Health checkup booking is not currently available on MediConnect.",
+    action: "Coming soon",
     icon: heartIcon,
-    to: "/doctors",
+    to: homepageActionDestinations.healthCheckups,
   },
 ];
 
@@ -85,11 +91,25 @@ function getDefaultArticleImage(category: string) {
 }
 
 function HomePage() {
+  const navigate = useNavigate();
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorSearchError, setDoctorSearchError] = useState("");
   const [articles, setArticles] = useState<ArticlePreview[]>([]);
   const [recommendedDoctors, setRecommendedDoctors] = useState<Doctor[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
   const [doctorsError, setDoctorsError] = useState(false);
   const [doctorsRetry, setDoctorsRetry] = useState(0);
+
+  function handleDoctorSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const { query, error } = validateDoctorSearch(doctorSearch);
+    if (error) {
+      setDoctorSearchError(error);
+      return;
+    }
+    setDoctorSearchError("");
+    navigate(buildDoctorDirectorySearchPath(query));
+  }
 
   useEffect(() => {
     async function loadArticles() {
@@ -136,40 +156,54 @@ function HomePage() {
             <div className="flex max-w-2xl flex-col gap-6">
               <div className="w-fit rounded-md bg-[#f0f5fd] px-2.5 py-1">
                 <span className="text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
-                  India's Trusted Healthcare Platform
+                  Doctor discovery and health information
                 </span>
               </div>
 
               <div className="space-y-4">
                 <h1 className="font-['Outfit'] text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[56px]">
-                  Your Health, Our Priority. Find &amp; Book the Best Doctors.
+                  Your Health, Our Priority. Find and Book Doctors.
                 </h1>
 
                 <p className="max-w-2xl text-base leading-7 text-[#64748b] sm:text-lg">
-                  Compare ratings, experience, and fee across top clinical
-                  experts in your city. Book instant consultations without the
-                  long queues.
+                  Browse verified doctor profiles, experience, listed practice
+                  details, and consultation fees. Review available booking
+                  options at each doctor's facilities.
                 </p>
               </div>
 
-              <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-[0_8px_12px_rgba(15,23,42,0.05)]">
-                <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
-                  <img src={searchIcon} alt="" className="h-6 w-6 shrink-0" />
+              <form onSubmit={handleDoctorSearch} className="w-full max-w-2xl">
+                <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-[0_8px_12px_rgba(15,23,42,0.05)]">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
+                    <img src={searchIcon} alt="" className="h-6 w-6 shrink-0" />
 
-                  <input
-                    type="text"
-                    placeholder="Search doctors, specialties, clinics..."
-                    className="w-full bg-transparent text-base text-[#334155] outline-none placeholder:text-[#64748b]"
-                  />
+                    <input
+                      aria-label="Search doctors by name or licence number"
+                      type="search"
+                      maxLength={MAX_DOCTOR_SEARCH_LENGTH}
+                      value={doctorSearch}
+                      onChange={(event) => {
+                        setDoctorSearch(event.target.value);
+                        if (doctorSearchError) setDoctorSearchError("");
+                      }}
+                      placeholder="Search doctors by name or licence number"
+                      className="w-full rounded-md bg-transparent py-2 text-base text-[#334155] outline-none placeholder:text-[#64748b] focus-visible:ring-2 focus-visible:ring-[#1a73e8]"
+                    />
 
-                  <Link
-                    to="/doctors"
-                    className="shrink-0 rounded-lg bg-[#1a73e8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
-                  >
-                    Find Doctors
-                  </Link>
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-lg bg-[#1a73e8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#155fc4]"
+                    >
+                      Find Doctors
+                    </button>
+                  </div>
                 </div>
-              </div>
+                {doctorSearchError && (
+                  <p role="alert" className="mt-2 text-sm font-medium text-red-600">
+                    {doctorSearchError}
+                  </p>
+                )}
+              </form>
             </div>
           </div>
 
@@ -190,37 +224,51 @@ function HomePage() {
         </h2>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-          {quickActions.map((action) => (
-            <Link
-              key={action.title}
-              to={action.to}
-              className="group flex min-h-[230px] flex-col rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-[0_4px_6px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)]"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0f5fd]">
-                <img src={action.icon} alt="" className="h-6 w-6" />
-              </div>
+          {quickActions.map((action) => {
+            const cardClassName = "group flex min-h-[230px] flex-col rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-[0_4px_6px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a73e8]";
+            const content = (
+              <>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0f5fd]">
+                  <img src={action.icon} alt="" className="h-6 w-6" />
+                </div>
 
-              <div className="mt-4">
-                <h3 className="font-['Outfit'] text-lg font-semibold">
-                  {action.title}
-                </h3>
+                <div className="mt-4">
+                  <h3 className="font-['Outfit'] text-lg font-semibold">
+                    {action.title}
+                  </h3>
 
-                <p className="mt-1.5 text-sm leading-5 text-[#64748b]">
-                  {action.description}
-                </p>
-              </div>
+                  <p className="mt-1.5 text-sm leading-5 text-[#64748b]">
+                    {action.description}
+                  </p>
+                </div>
 
-              <div className="mt-auto flex items-center gap-1 pt-6 text-sm font-semibold text-[#1a73e8]">
-                <span>{action.action}</span>
+                <div className="mt-auto flex items-center gap-1 pt-6 text-sm font-semibold text-[#1a73e8]">
+                  <span>{action.action}</span>
 
-                <img
-                  src={arrowRightIcon}
-                  alt=""
-                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
-                />
-              </div>
-            </Link>
-          ))}
+                  {action.to && (
+                    <img
+                      src={arrowRightIcon}
+                      alt=""
+                      className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                    />
+                  )}
+                </div>
+              </>
+            );
+            return action.to ? (
+              <Link key={action.title} to={action.to} className={cardClassName}>
+                {content}
+              </Link>
+            ) : (
+              <article
+                key={action.title}
+                aria-label={`${action.title}: coming soon`}
+                className="flex min-h-[230px] flex-col rounded-2xl border border-dashed border-[#cbd5e1] bg-white p-6 opacity-90"
+              >
+                {content}
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -377,17 +425,17 @@ function HomePage() {
             {/* Left Content */}
             <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
               <span className="w-fit rounded-md bg-[#eaf6ff] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#1a73e8]">
-                Medicines & Pharmacy
+                Medicine Information
               </span>
 
               <h2 className="mt-5 max-w-xl font-['Outfit'] text-3xl font-bold leading-tight text-[#0f172a] sm:text-4xl">
-                Get medicines delivered to your doorstep
+                Explore medicine information
               </h2>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-[#64748b]">
-                Order prescription and everyday medicines from trusted
-                pharmacies. Get your medicines delivered quickly and
-                conveniently.
+                Search FDA drug-label information, including active ingredients,
+                uses, dosage details, and warnings. Ordering and delivery are
+                not currently available on MediConnect.
               </p>
 
               <div className="mt-7">
@@ -395,7 +443,7 @@ function HomePage() {
                   to="/medicines"
                   className="inline-flex items-center rounded-lg bg-[#1a73e8] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#155fc4]"
                 >
-                  Get Medicines
+                  Browse Medicines
                   <span className="ml-2">→</span>
                 </Link>
               </div>

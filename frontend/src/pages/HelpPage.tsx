@@ -207,7 +207,7 @@ function HelpPage() {
                   to={guide.to}
                   className="block px-6 py-5 transition hover:bg-[#f8fafc]"
                 >
-                  <h3 className="font-['DM_Sans'] text-base font-semibold text-slate-800">
+                  <h3 className="text-base font-semibold text-slate-800">
                     {guide.title}
                   </h3>
 

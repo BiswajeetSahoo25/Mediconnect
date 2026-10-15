@@ -8,8 +8,8 @@ import type { CreateUserInput } from "../users/user.validation.js";
 export class AuthController {
   private readonly authService: AuthService;
 
-  constructor() {
-    this.authService = new AuthService();
+  constructor(authService = new AuthService()) {
+    this.authService = authService;
   }
 
   private setAuthCookies(

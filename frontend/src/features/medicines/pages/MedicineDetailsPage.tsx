@@ -180,7 +180,7 @@ function MedicineDetailsPage() {
   // ---- Loading ---------------------------------------------------------
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-[60vh] items-center justify-center bg-white">
         <p className="font-['DM_Sans'] text-sm text-slate-500">Loading medicine information…</p>
       </div>
     );
@@ -189,7 +189,7 @@ function MedicineDetailsPage() {
   // ---- Not found ------------------------------------------------------
   if (notFound || !medicine || !medicine.name) {
     return (
-      <div className="min-h-screen bg-white px-6 py-24">
+      <div className="min-h-[60vh] bg-white px-6 py-24">
         <div className="mx-auto max-w-xl text-center">
           <p className="font-['Outfit'] text-5xl font-extrabold text-slate-200">404</p>
           <h1 className="mt-4 font-['Outfit'] text-2xl font-bold text-slate-900">Medicine not found</h1>
@@ -210,7 +210,7 @@ function MedicineDetailsPage() {
   // ---- Error ----------------------------------------------------------
   if (error) {
     return (
-      <div className="min-h-screen bg-white px-6 py-24">
+      <div className="min-h-[60vh] bg-white px-6 py-24">
         <div className="mx-auto max-w-xl text-center">
           <h1 className="font-['Outfit'] text-2xl font-bold text-slate-900">Something went wrong</h1>
           <p className="mt-2 font-['DM_Sans'] text-sm text-slate-500">{error}</p>
@@ -266,7 +266,7 @@ function MedicineDetailsPage() {
       </div>
 
       {/* Main content — wide container */}
-      <main className="mx-auto max-w-7xl px-6 py-6">
+      <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Medicine header with image */}
         <header className="mb-8 rounded-lg border border-slate-200 bg-slate-50 p-5">
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-start">
@@ -528,7 +528,7 @@ function MedicineDetailsPage() {
         <p className="mt-4 font-['DM_Sans'] text-xs text-slate-400">
           Source: U.S. FDA drug labeling data via openFDA.
         </p>
-      </main>
+      </div>
     </div>
   );
 }

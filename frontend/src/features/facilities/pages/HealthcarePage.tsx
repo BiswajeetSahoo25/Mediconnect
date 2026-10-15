@@ -113,7 +113,7 @@ export default function HealthcarePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <div className="bg-slate-50">
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8">
           <div className="max-w-2xl">
@@ -121,7 +121,7 @@ export default function HealthcarePage() {
               Healthcare Discovery
             </p>
 
-            <h1 className="mt-2 font-['DM_Sans'] text-4xl font-bold text-slate-900">
+            <h1 className="mt-2 text-4xl font-bold text-slate-900">
               Find healthcare near you
             </h1>
 
@@ -188,7 +188,7 @@ export default function HealthcarePage() {
             <>
               {locationName && (
                 <div className="mb-6">
-                  <h2 className="font-['DM_Sans'] text-2xl font-bold text-slate-900">
+                  <h2 className="text-2xl font-bold text-slate-900">
                     Healthcare near {locationName}
                   </h2>
 
@@ -290,6 +290,6 @@ export default function HealthcarePage() {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

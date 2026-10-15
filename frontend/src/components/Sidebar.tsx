@@ -152,6 +152,10 @@ function Sidebar() {
         ]
       : []),
   ];
+  const isActive = (path: string) =>
+    path === "/dashboard"
+      ? location.pathname === path
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const providerNavigation = [
     {
@@ -181,14 +185,14 @@ function Sidebar() {
             item.path !== "/apply-as-doctor" ||
             (isPatient && doctorApplicationStatus === null),
         )].map((item) => {
-          const isActive = location.pathname === item.path;
+          const active = isActive(item.path);
           return (
             <Link
               key={item.path}
               to={item.path}
-              aria-current={isActive ? "page" : undefined}
+              aria-current={active ? "page" : undefined}
               className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                isActive
+                active
                   ? "bg-blue-50 text-blue-700"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
@@ -235,17 +239,18 @@ function Sidebar() {
         <div className="space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const active = isActive(item.path);
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={active ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
                 className={`flex items-center rounded-xl py-3 text-sm font-medium transition ${
                   collapsed ? "justify-center px-0" : "gap-3 px-3"
                 } ${
-                  isActive
+                  active
                     ? "bg-blue-50 text-[#1a73e8]"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
@@ -275,17 +280,18 @@ function Sidebar() {
             )
             .map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const active = isActive(item.path);
 
               return (
                 <Link
                   key={item.path}
                   to={item.path}
+                  aria-current={active ? "page" : undefined}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center rounded-xl py-3 text-sm font-medium transition ${
                     collapsed ? "justify-center px-0" : "gap-3 px-3"
                   } ${
-                    isActive
+                    active
                       ? "bg-blue-50 text-[#1a73e8]"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
