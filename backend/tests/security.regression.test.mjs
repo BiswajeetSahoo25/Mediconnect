@@ -7,9 +7,9 @@ process.env.PORT ??= "4000";
 process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/mediconnect_test";
 process.env.FRONTEND_URL ??= "http://localhost:5173";
 process.env.JWT_ACCESS_SECRET ??= "unit-test-only-access-secret-at-least-32-chars";
-process.env.ACCESS_TOKEN_EXPIRES_IN ??= "15m";
+process.env.JWT_ACCESS_EXPIRES_IN ??= "15m";
 process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS ??= "30";
-process.env.GOOGLE_MAPS_API_KEY ??= "unit-test-placeholder";
+process.env.GEOAPIFY_API_KEY ??= "unit-test-placeholder";
 
 const [express, cookieParser, errorModule, auth, roles, verified, doctorRouter, recordRouter,
   access, validation, authServiceModule, refreshTokens, httpErrors, medValidation,
@@ -185,8 +185,15 @@ test("login rejects nonexistent accounts and invalid passwords with the same una
   const absent = new AuthService({ findByEmail: async () => null });
   await assert.rejects(absent.login("missing@example.invalid", "guess"), (error) => error.statusCode === 401);
   const passwordHash = await argon2.default.hash("correct-password");
-  const wrong = new AuthService({ findByEmail: async () => ({ passwordHash, id: "u" }) });
+  const wrong = new AuthService({ findByEmail: async () => ({ passwordHash, id: "u", isActive: true, deletedAt: null }) });
   await assert.rejects(wrong.login("user@example.invalid", "wrong"), (error) => error.statusCode === 401);
+  for (const account of [
+    { passwordHash, id: "inactive", isActive: false, deletedAt: null },
+    { passwordHash, id: "deleted", isActive: true, deletedAt: new Date() },
+  ]) {
+    const ineligible = new AuthService({ findByEmail: async () => account });
+    await assert.rejects(ineligible.login("user@example.invalid", "correct-password"), (error) => error.statusCode === 401);
+  }
 });
 
 test("refresh rejects a missing cookie and logout revokes the token and clears both auth cookies", async () => {
@@ -203,11 +210,21 @@ test("refresh rejects a missing cookie and logout revokes the token and clears b
 
 test("refresh rejects missing, unknown, expired, and revoked tokens and only one concurrent rotation wins", async () => {
   const { AuthService } = authServiceModule;
-  const validUser = { id: "user-a", email: "a@example.invalid", phone: null, role: "PATIENT", isVerified: false, isActive: true, lastLoginAt: null, onboardingCompletedAt: null, createdAt: new Date(), updatedAt: new Date() };
+  const validUser = { id: "user-a", email: "a@example.invalid", phone: null, role: "PATIENT", isVerified: false, isActive: true, deletedAt: null, lastLoginAt: null, onboardingCompletedAt: null, createdAt: new Date(), updatedAt: new Date() };
   const userRepository = { findById: async () => validUser };
   for (const stored of [null, { id: "r", userId: "user-a", revokedAt: new Date(), expiresAt: new Date(Date.now() + 60_000) }, { id: "r", userId: "user-a", revokedAt: null, expiresAt: new Date(Date.now() - 1) }]) {
     const svc = new AuthService(userRepository, { findByTokenHash: async () => stored });
     await assert.rejects(svc.refresh("test-refresh"), (error) => error.statusCode === 401);
+  }
+  for (const ineligibleUser of [
+    { ...validUser, isActive: false },
+    { ...validUser, deletedAt: new Date() },
+  ]) {
+    const svc = new AuthService({ findById: async () => ineligibleUser }, {
+      findByTokenHash: async () => ({ id: "r", userId: "user-a", revokedAt: null, expiresAt: new Date(Date.now() + 60_000) }),
+      revokeIfActive: async () => ({ count: 1 }),
+    });
+    await assert.rejects(svc.refresh("ineligible-refresh"), (error) => error.statusCode === 401);
   }
   let active = true;
   let created = 0;

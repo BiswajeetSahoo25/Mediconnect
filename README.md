@@ -190,7 +190,7 @@ Open the URL printed by Vite, usually <http://localhost:5173>. Keep both develop
 | `OPENFDA_API_KEY` | No | Optional key for openFDA requests; the code can call openFDA without it. |
 | `SEED_ADMIN_EMAIL` | For admin/article/doctor seeds | Email for the local development admin created or reused by those seeds. |
 | `SEED_ADMIN_PASSWORD` | For admin/article/doctor seeds | Local development admin password. Choose your own value. |
-| `SEED_DOCTOR_PASSWORD` | No | Password for fictional seeded doctors; defaults to `DemoDoctor@123` when unset. Set a private local value if using the seed accounts. |
+| `SEED_DOCTOR_PASSWORD` | For doctor seeds | Password for fictional seeded doctors. Set a private local value before running the seed; the template value is only a reminder. |
 
 Keep real `.env` files and credentials out of Git. Only use development seed accounts and credentials with local development data.
 
@@ -201,6 +201,8 @@ node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'
 ```
 
 The generated value is 48 random bytes encoded as text. Keep `OPENFDA_API_KEY` empty when you do not use that optional service.
+
+For local setup, copy `backend/.env.example` to `backend/.env`, then replace its database password, Geoapify key, JWT secret, and seed credential placeholders with private development values. The seed scripts reject missing or placeholder passwords. Seed passwords are examples only; do not use them outside a disposable local database.
 
 ### Frontend (`frontend/.env`)
 
@@ -241,12 +243,15 @@ Run commands from the relevant package directory.
 | `npm start` | Run the compiled API. Build first. |
 | `npm run typecheck` | Type-check without emitting files. |
 | `npm run test:env` | Run isolated environment-validation tests; no database is required. |
+| `npm run test:error-middleware` | Run HTTP error response regression tests. |
+| `npm run test:security` | Run authentication and security regression tests; database cases are skipped unless explicitly enabled. |
+| `npm run test:appointment-time` | Run deterministic appointment timezone and slot-generation tests. |
 | `npx prisma migrate deploy` | Apply committed migrations. |
 | `npx prisma generate` | Generate the Prisma client. |
 | `npm run seed:specializations` | Seed the specialization catalog. |
 | `npm run seed:doctors` | Seed fictional doctor and facility data. |
 | `npm run seed:articles` | Seed articles and the development admin. |
-| `npm run test:appointment-integrity` | Run the appointment integrity integration test; requires a configured PostgreSQL test database. |
+| `npm run test:appointment-integrity` | Run appointment integrity tests; database cases require explicit opt-in and a dedicated local PostgreSQL database whose name contains `test`. |
 
 ### Frontend (`frontend/`)
 
@@ -257,6 +262,9 @@ Run commands from the relevant package directory.
 | `npm run preview` | Serve the last production build locally. |
 | `npm run typecheck` | Type-check without creating a production bundle. |
 | `npm run lint` | Run ESLint. |
+| `npm run test:homepage-navigation` | Run homepage navigation and search URL tests. |
+
+Database integration tests must never target a production or shared database. For appointment integrity tests, set `NODE_ENV=test`, point `DATABASE_URL` at a dedicated local database with `test` in its name, and set `RUN_APPOINTMENT_INTEGRATION_TESTS=1`. Medical-record database tests use the same safeguards with `RUN_SECURITY_INTEGRATION_TESTS=1`. Both suites skip database work by default.
 
 The root `npm test` script is currently a placeholder; use the package-level commands above.
 

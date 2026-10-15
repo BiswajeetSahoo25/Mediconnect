@@ -5,9 +5,9 @@ import {
 } from "../../../src/generated/prisma/client.js";
 import { prisma } from "../../../src/config/prisma.js";
 import { doctorSeedData } from "./doctor-data.js";
+import { requireSeedCredential } from "./seed-credentials.js";
 
-const DEMO_DOCTOR_PASSWORD =
-  process.env.SEED_DOCTOR_PASSWORD ?? "DemoDoctor@123";
+const DEMO_DOCTOR_PASSWORD = requireSeedCredential("SEED_DOCTOR_PASSWORD");
 
 const facilities = [
   {
@@ -361,8 +361,8 @@ async function seedDoctors() {
    * the article seed.
    */
 
-  const adminEmail = process.env.SEED_ADMIN_EMAIL;
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim();
+  const adminPassword = requireSeedCredential("SEED_ADMIN_PASSWORD");
 
   if (!adminEmail || !adminPassword) {
     throw new Error(

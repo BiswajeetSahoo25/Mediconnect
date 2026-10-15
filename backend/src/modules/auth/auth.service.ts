@@ -51,7 +51,7 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.userRepository.findByEmail(email);
 
-    if (!user) {
+    if (!user || !user.isActive || user.deletedAt !== null) {
       throw new UnauthorizedError();
     }
 
@@ -110,7 +110,7 @@ export class AuthService {
 
     const user = await this.userRepository.findById(storedToken.userId);
 
-    if (!user) {
+    if (!user || !user.isActive || user.deletedAt !== null) {
       throw new UnauthorizedError();
     }
 

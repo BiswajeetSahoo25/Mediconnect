@@ -5,10 +5,11 @@ import {
 } from "../../../src/generated/prisma/client.js";
 import { prisma } from "../../../src/config/prisma.js";
 import { articles } from "./article-data.js";
+import { requireSeedCredential } from "./seed-credentials.js";
 
 async function seedArticles() {
-  const adminEmail = process.env.SEED_ADMIN_EMAIL;
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim();
+  const adminPassword = requireSeedCredential("SEED_ADMIN_PASSWORD");
 
   if (!adminEmail || !adminPassword) {
     throw new Error(

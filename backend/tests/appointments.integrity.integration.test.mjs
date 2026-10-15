@@ -21,9 +21,14 @@ if (integrationEnabled) {
       "Appointment integrity tests only run against a local PostgreSQL database",
     );
   }
+  if (!databaseUrl.pathname.toLowerCase().includes("test")) {
+    throw new Error(
+      "Appointment integrity tests require a dedicated database whose name contains 'test'",
+    );
+  }
 } else {
   test("appointment integrity integration tests require explicit opt-in", {
-    skip: "Set RUN_APPOINTMENT_INTEGRATION_TESTS=1 to create and clean up isolated test rows",
+    skip: "Set RUN_APPOINTMENT_INTEGRATION_TESTS=1 with NODE_ENV=test and a localhost database whose name contains 'test'",
   });
 }
 
