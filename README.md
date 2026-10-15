@@ -1,109 +1,339 @@
 # MediConnect
 
-MediConnect is a healthcare ecosystem platform designed to connect patients, doctors, clinics, and healthcare facilities through a unified digital platform.
+MediConnect is a healthcare web application for patients, doctors, and administrators. Patients can discover doctors and healthcare facilities, book appointments, manage their profile, and keep medical documents in one place. Doctors can manage their professional profile and appointments, while administrators review doctor applications.
 
-The project focuses on making healthcare discovery and interaction more accessible while providing a foundation for features such as doctor discovery, appointment booking, medical records, healthcare articles, and provider management.
+> MediConnect is an actively developed project. It is intended as a product and engineering project, not as a substitute for professional medical advice or emergency care.
 
-## Project Status
+## Contents
 
-🚧 **Currently under active development**
+- [Features](#features)
+- [Technology](#technology)
+- [Application structure](#application-structure)
+- [Requirements](#requirements)
+- [Run locally](#run-locally)
+- [Environment variables](#environment-variables)
+- [Database and development data](#database-and-development-data)
+- [Available commands](#available-commands)
+- [Main routes](#main-routes)
+- [API overview](#api-overview)
+- [Troubleshooting](#troubleshooting)
 
-This repository represents the current development milestone of MediConnect. The project is being developed incrementally, with frontend interfaces being implemented first followed by backend integration and additional healthcare workflows.
+## Features
 
-## Current Features
+### Patients
 
-### Patient Experience
+- Sign up, sign in, session refresh, and account settings
+- Profile onboarding, addresses, and emergency contacts
+- Patient dashboard with appointment and medical-record summaries
+- Search doctors by details and specialization; view profiles and availability
+- Book and manage appointments
+- Upload, preview, download, and remove medical records (PDF, JPG, PNG, and WEBP; up to 5 MB)
+- Discover healthcare facilities by location
+- Read health articles and browse medicine information
+- Apply to become a doctor
 
-- Patient registration and login
-- User onboarding
-- Patient dashboard
-- Account and profile settings
-- Residential address management
-- Emergency contact management
-- Healthcare facility discovery
-- Location-based healthcare discovery
-- Search healthcare facilities by city/location
-- Healthcare facility details
-- Health articles
-- Individual health article pages
-- Doctor discovery interface
-- Individual doctor profile interface
+### Doctors
 
-### Healthcare Discovery
+- Doctor application and administrator review workflow
+- Doctor workspace with professional profile and practice locations
+- Manage specializations and appointments
 
-MediConnect allows users to discover nearby healthcare facilities and search for healthcare facilities in different locations.
+### Administrators
 
-The current healthcare discovery system integrates external location and healthcare data to provide facility information such as:
+- Review, approve, revoke, and re-verify doctor applications
+- Manage article content through the API
 
-- Hospitals
-- Clinics
-- Location
-- Address
-- Contact information
-- Opening hours
-- Facility details
-- Distance from the user's location
+## Technology
 
-The long-term system will distinguish between externally discovered healthcare facilities and verified MediConnect facilities that can support booking and other platform features.
+| Area | Technology |
+| --- | --- |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, Axios |
+| Backend | Node.js, Express 5, TypeScript, Zod |
+| Database | PostgreSQL with Prisma ORM |
+| Authentication | JWT access tokens, HTTP-only refresh cookie, Argon2 password hashing |
+| Location and facility search | Geoapify |
+| Medicine information | openFDA (API key optional) |
 
-## Planned Features
+Medical record file contents are currently stored in PostgreSQL (`BYTEA`) alongside their record metadata. The app does not currently require a separate file-storage provider.
 
-- Doctor appointment booking
-- Appointment management
-- Doctor dashboard
-- Clinic management
-- Medical records
-- Prescriptions
-- Doctor-to-doctor communication
-- Healthcare provider profiles
-- Verified healthcare facilities
-- Provider articles and healthcare stories
-- Patient-provider interactions
-- Notifications
-- Role-based healthcare workflows
-
-## Technology Stack
-
-### Frontend
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- Axios
-- React Hook Form
-- Zod
-
-### Backend
-
-- Node.js
-- Express
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT authentication
-- Argon2 password hashing
-- Zod validation
-
-### External Services
-
-- Geoapify for location and healthcare facility discovery
-- Google Maps for map navigation
-
-## Architecture
-
-MediConnect follows a layered backend architecture:
+## Application structure
 
 ```text
-Route
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Repository
-  ↓
-Prisma
-  ↓
-PostgreSQL
+.
+├── backend/
+│   ├── prisma/
+│   │   ├── migrations/       # Committed PostgreSQL migrations
+│   │   └── seed/dev/         # Development-only seed scripts
+│   └── src/
+│       ├── config/           # Environment and Prisma setup
+│       ├── middleware/       # Authentication, roles, validation, errors
+│       └── modules/          # Auth, patients, doctors, appointments, etc.
+└── frontend/
+    └── src/
+        ├── components/       # Shared UI and route guards
+        ├── context/          # Authentication and location state
+        ├── features/         # Feature pages, services, and types
+        ├── layouts/          # Public, patient, auth, and doctor layouts
+        └── pages/            # Shared and informational pages
+```
+
+The backend uses a layered structure: **routes → controllers → services → repositories → Prisma/PostgreSQL**. The frontend is a Vite single-page application; its API client sends credentialed requests to the backend.
+
+## Requirements
+
+- Node.js **22.12 or newer** (Node 24 LTS also works with the current toolchain)
+- npm
+- PostgreSQL and a database named `mediconnect`
+- A Geoapify API key for facility/location search
+
+Check installed versions:
+
+```bash
+node --version
+npm --version
+```
+
+## Run locally
+
+### 1. Get the code
+
+```bash
+git clone https://github.com/BiswajeetSahoo25/Mediconnect.git
+cd Mediconnect
+```
+
+### 2. Create the PostgreSQL database
+
+Create a PostgreSQL database named `mediconnect`. For example, if `psql` is installed:
+
+```bash
+psql -U postgres -c "CREATE DATABASE mediconnect;"
+```
+
+If the database already exists, keep it and continue. The database user in `DATABASE_URL` must be allowed to connect and run migrations.
+
+### 3. Configure and start the backend
+
+In one terminal, from the repository root:
+
+```bash
+cd backend
+npm install
+```
+
+Create `backend/.env` from the example and edit its values. PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+macOS/Linux:
+
+```bash
+cp .env.example .env
+```
+
+Set `DATABASE_URL` to your PostgreSQL credentials and database, and set a real `GEOAPIFY_API_KEY`. See [Environment variables](#environment-variables) below.
+
+Apply the committed migrations and generate the Prisma client:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+```
+
+Start the API:
+
+```bash
+npm run dev
+```
+
+The API listens on `http://localhost:3000` by default. Check that it is running at <http://localhost:3000/health>.
+
+### 4. Configure and start the frontend
+
+Open a second terminal at the repository root:
+
+```bash
+cd frontend
+npm install
+```
+
+Create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+Start Vite:
+
+```bash
+npm run dev
+```
+
+Open the URL printed by Vite, usually <http://localhost:5173>. Keep both development servers running.
+
+## Environment variables
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NODE_ENV` | Yes | Use `development` locally. |
+| `PORT` | Yes | API port; normally `3000`. |
+| `DATABASE_URL` | Yes | PostgreSQL connection string, for example `postgresql://postgres:password@localhost:5432/mediconnect`. |
+| `FRONTEND_URL` | Yes | Exact frontend origin allowed by CORS; normally `http://localhost:5173`. |
+| `JWT_ACCESS_SECRET` | Yes | Long, random secret used to sign access tokens. Do not use the example value in a deployed environment. |
+| `JWT_ACCESS_EXPIRES_IN` | Yes | Access-token lifetime, for example `15m`. |
+| `REFRESH_TOKEN_EXPIRES_IN_DAYS` | Yes | Refresh-token lifetime in days, for example `30`. |
+| `GEOAPIFY_API_KEY` | Yes | Geoapify key used by healthcare-facility and location search. |
+| `OPENFDA_API_KEY` | No | Optional key for openFDA requests; the code can call openFDA without it. |
+| `SEED_ADMIN_EMAIL` | For admin/article/doctor seeds | Email for the local development admin created or reused by those seeds. |
+| `SEED_ADMIN_PASSWORD` | For admin/article/doctor seeds | Local development admin password. Choose your own value. |
+| `SEED_DOCTOR_PASSWORD` | No | Password for fictional seeded doctors; defaults to `DemoDoctor@123` when unset. Set a private local value if using the seed accounts. |
+
+Keep real `.env` files and credentials out of Git. Only use development seed accounts and credentials with local development data.
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | Yes | Backend API base URL, normally `http://localhost:3000/api/v1`. |
+
+Vite exposes `VITE_*` values to the browser. Never put server secrets or database credentials in frontend environment variables.
+
+## Database and development data
+
+The Prisma schema is in `backend/prisma/schema.prisma`; the migration history is in `backend/prisma/migrations/`.
+
+- **Fresh/local setup:** `npx prisma migrate deploy` applies all committed migrations to the configured database.
+- **After changing the Prisma schema during development:** create a migration with `npx prisma migrate dev --name describe_change`, then run `npx prisma generate`.
+- **Check migration state:** `npx prisma migrate status`.
+
+Optional development seeds (run from `backend/`):
+
+```bash
+npm run seed:specializations
+npm run seed:doctors
+npm run seed:articles
+```
+
+`seed:doctors` creates fictional doctors, facilities, departments, and availability for local discovery/booking flows. `seed:articles` creates/reuses the admin specified by `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD`, then seeds articles. These scripts write to the connected database: use a development database, never a production database. You can also register a patient through the frontend rather than seeding one.
+
+## Available commands
+
+Run commands from the relevant package directory.
+
+### Backend (`backend/`)
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Run the API with TypeScript watch/restart. |
+| `npm run build` | Compile TypeScript into `backend/dist`. |
+| `npm start` | Run the compiled API. Build first. |
+| `npm run typecheck` | Type-check without emitting files. |
+| `npx prisma migrate deploy` | Apply committed migrations. |
+| `npx prisma generate` | Generate the Prisma client. |
+| `npm run seed:specializations` | Seed the specialization catalog. |
+| `npm run seed:doctors` | Seed fictional doctor and facility data. |
+| `npm run seed:articles` | Seed articles and the development admin. |
+| `npm run test:appointment-integrity` | Run the appointment integrity integration test; requires a configured PostgreSQL test database. |
+
+### Frontend (`frontend/`)
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Run the Vite development server. |
+| `npm run build` | Type-check and create the production build in `frontend/dist`. |
+| `npm run preview` | Serve the last production build locally. |
+| `npm run typecheck` | Type-check without creating a production bundle. |
+| `npm run lint` | Run ESLint. |
+
+The root `npm test` script is currently a placeholder; use the package-level commands above.
+
+## Main routes
+
+### Public
+
+| Route | Page |
+| --- | --- |
+| `/` | Home |
+| `/about` | About MediConnect |
+| `/doctors` | Doctor discovery |
+| `/doctors/:id` | Doctor profile and availability |
+| `/healthcare` | Healthcare facility discovery |
+| `/healthcare/:placeId` | Facility details |
+| `/health-articles` | Health articles |
+| `/health-articles/:slug` | Article details |
+| `/medicines` | Medicine search |
+| `/medicines/:id` | Medicine details |
+| `/faq`, `/help`, `/contact` | Help and information |
+| `/privacy`, `/terms` | Policies |
+| `/login`, `/signup` | Authentication |
+
+### Signed-in application
+
+| Route | Access |
+| --- | --- |
+| `/onboarding` | Signed-in users completing patient setup |
+| `/dashboard` | Patient dashboard |
+| `/appointments` | Patient appointment list |
+| `/appointments/:id` | Appointment details |
+| `/doctors/:id/book` | Patient appointment booking |
+| `/records` | Patient medical records |
+| `/account` | Account settings |
+| `/apply-as-doctor` | Eligible patients applying as a doctor |
+| `/doctor-dashboard` | Doctor dashboard |
+| `/doctor-dashboard/profile` | Doctor profile and practice |
+| `/doctor-dashboard/appointments` | Doctor appointment management |
+| `/admin/doctor-applications` | Admin doctor-application review |
+
+Protected routes enforce authentication, role, and onboarding/application rules in the frontend and backend.
+
+## API overview
+
+The backend API is versioned under `/api/v1`. Useful route groups include:
+
+| Prefix | Purpose |
+| --- | --- |
+| `/api/v1/auth` | Signup, login, logout, refresh, current user |
+| `/api/v1/users` | User profile, onboarding, and account operations |
+| `/api/v1/patients` | Patient profile and medical records |
+| `/api/v1/patients/me/emergency-contacts` | Patient emergency contacts |
+| `/api/v1/users/me/addresses` | User addresses |
+| `/api/v1/doctors` | Doctor discovery, applications, profiles, and availability |
+| `/api/v1/specializations` | Specialization catalog |
+| `/api/v1/appointments` | Booking and appointment management |
+| `/api/v1/articles` | Health articles |
+| `/api/v1/facilities` | Healthcare facility discovery |
+| `/api/v1/medicines` | Medicine information |
+
+`GET /health` is a basic service health check. Authenticated endpoints use the app’s access-token and refresh-cookie flow.
+
+## Troubleshooting
+
+### Backend exits with “Missing required environment variable”
+
+Confirm that `backend/.env` exists and includes all required variables listed above. In particular, the backend requires `REFRESH_TOKEN_EXPIRES_IN_DAYS` (not `REFRESH_TOKEN_EXPIRES_IN`). Restart the backend after changing environment variables.
+
+### Database connection or Prisma migration errors
+
+- Make sure PostgreSQL is running, `mediconnect` exists, and `DATABASE_URL` has the right host, port, user, password, and database name.
+- From `backend/`, run `npx prisma migrate status` to see whether migrations are pending.
+- Apply committed migrations with `npx prisma migrate deploy`, then run `npx prisma generate`.
+
+### Browser reports a CORS or network error
+
+Check that the backend is listening on the configured port, `VITE_API_BASE_URL` points to its `/api/v1` URL, and `FRONTEND_URL` exactly matches the frontend origin (including port). Restart both servers after changing `.env` files.
+
+### Facility search does not return results
+
+`GEOAPIFY_API_KEY` is required by the backend configuration and must be a valid Geoapify key. Check the backend console and the key’s service/usage settings.
+
+### Port is already in use
+
+Stop the other process using the port or change `PORT` in `backend/.env`. If the backend port changes, update `VITE_API_BASE_URL` in `frontend/.env` to match.
+
+## Contributing
+
+Keep database schema changes in Prisma migrations, validate request data at the API boundary, and preserve patient/doctor/admin authorization checks when changing protected flows. Keep credentials and real patient information out of commits, logs, screenshots, and development seeds.
