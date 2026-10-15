@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:homepage-navigation": "node --experimental-strip-types --test tests/homepage-navigation.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -502,7 +502,7 @@ function PatientAccountSettingsPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-full bg-[#f0f7ff] p-6 lg:p-10">
+      <div className="min-h-full bg-slate-50">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6">
             <p className="text-sm text-[#64748b]">
@@ -510,13 +510,13 @@ function PatientAccountSettingsPage() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (loadError) {
     return (
-      <main className="min-h-full bg-[#f0f7ff] p-6 lg:p-10">
+      <div className="min-h-full bg-slate-50">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
             {loadError}
@@ -530,12 +530,12 @@ function PatientAccountSettingsPage() {
             </button>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-full bg-[#f0f7ff] p-6 lg:p-10">
+    <div className="min-h-full bg-slate-50">
       {successMessage && (
         <div className="fixed right-6 top-6 z-50 flex max-w-sm items-center gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-emerald-700 shadow-lg">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
@@ -603,7 +603,7 @@ function PatientAccountSettingsPage() {
                   <input
                     id="firstName"
                     {...register("firstName")}
-                    className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                    className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                   />
 
                   {errors.firstName && (
@@ -625,7 +625,7 @@ function PatientAccountSettingsPage() {
                     <input
                       id="lastName"
                       {...register("lastName")}
-                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                     />
 
                     {errors.lastName && (
@@ -647,7 +647,7 @@ function PatientAccountSettingsPage() {
                       id="email"
                       type="email"
                       {...register("email")}
-                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                     />
 
                     {errors.email && (
@@ -670,7 +670,7 @@ function PatientAccountSettingsPage() {
                     id="phone"
                     type="tel"
                     {...register("phone")}
-                    className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                    className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                   />
 
                   {errors.phone && (
@@ -693,7 +693,7 @@ function PatientAccountSettingsPage() {
                       id="dateOfBirth"
                       type="date"
                       {...register("dateOfBirth")}
-                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                      className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                     />
                   </div>
 
@@ -708,7 +708,7 @@ function PatientAccountSettingsPage() {
                     <select
                       id="gender"
                       {...register("gender")}
-                      className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                      className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                     >
                       <option value="">Select</option>
                       <option value="MALE">Male</option>
@@ -728,7 +728,7 @@ function PatientAccountSettingsPage() {
                     <select
                       id="bloodGroup"
                       {...register("bloodGroup")}
-                      className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                      className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                     >
                       <option value="">Select</option>
                       <option value="A+">A+</option>
@@ -762,7 +762,7 @@ function PatientAccountSettingsPage() {
                   <button
                     type="button"
                     onClick={addAddress}
-                    className="flex shrink-0 items-center gap-1 rounded-lg border border-[#bae6fd] px-3 py-2 text-sm font-semibold text-[#0284c7] hover:bg-[#f0f9ff]"
+                    className="flex shrink-0 items-center gap-1 rounded-lg border border-[#bfdbfe] px-3 py-2 text-sm font-semibold text-[#1a73e8] hover:bg-[#f8fbff]"
                   >
                     <span className="text-base">+</span>
                     Add
@@ -803,7 +803,7 @@ function PatientAccountSettingsPage() {
                                 </p>
 
                                 {field.isDefault && (
-                                  <span className="rounded-full bg-[#e0f2fe] px-2 py-0.5 text-[10px] font-semibold text-[#0284c7]">
+                                  <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[10px] font-semibold text-[#1a73e8]">
                                     Default
                                   </span>
                                 )}
@@ -835,7 +835,7 @@ function PatientAccountSettingsPage() {
                               <button
                                 type="button"
                                 onClick={() => setEditingAddressIndex(index)}
-                                className="text-xs font-semibold text-[#0284c7]"
+                                className="text-xs font-semibold text-[#1a73e8]"
                               >
                                 Edit
                               </button>
@@ -862,7 +862,7 @@ function PatientAccountSettingsPage() {
                                   {...register(
                                     `addresses.${index}.addressType`,
                                   )}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] bg-white px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 >
                                   <option value="HOME">Home</option>
                                   <option value="WORK">Work</option>
@@ -877,7 +877,7 @@ function PatientAccountSettingsPage() {
 
                                 <input
                                   {...register(`addresses.${index}.pincode`)}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
                             </div>
@@ -889,7 +889,7 @@ function PatientAccountSettingsPage() {
 
                               <input
                                 {...register(`addresses.${index}.addressLine1`)}
-                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                               />
                             </div>
 
@@ -900,7 +900,7 @@ function PatientAccountSettingsPage() {
 
                               <input
                                 {...register(`addresses.${index}.addressLine2`)}
-                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                               />
                             </div>
 
@@ -911,7 +911,7 @@ function PatientAccountSettingsPage() {
 
                               <input
                                 {...register(`addresses.${index}.landmark`)}
-                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                               />
                             </div>
 
@@ -923,7 +923,7 @@ function PatientAccountSettingsPage() {
 
                                 <input
                                   {...register(`addresses.${index}.city`)}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
 
@@ -934,7 +934,7 @@ function PatientAccountSettingsPage() {
 
                                 <input
                                   {...register(`addresses.${index}.state`)}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
 
@@ -945,7 +945,7 @@ function PatientAccountSettingsPage() {
 
                                 <input
                                   {...register(`addresses.${index}.country`)}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
                             </div>
@@ -981,7 +981,7 @@ function PatientAccountSettingsPage() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingAddressIndex(null)}
-                                  className="rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white"
+                                  className="rounded-lg bg-[#1a73e8] px-4 py-2 text-sm font-semibold text-white"
                                 >
                                   Done
                                 </button>
@@ -1012,7 +1012,7 @@ function PatientAccountSettingsPage() {
                   <button
                     type="button"
                     onClick={addEmergencyContact}
-                    className="flex shrink-0 items-center gap-1 rounded-lg border border-[#bae6fd] px-3 py-2 text-sm font-semibold text-[#0284c7] hover:bg-[#f0f9ff]"
+                    className="flex shrink-0 items-center gap-1 rounded-lg border border-[#bfdbfe] px-3 py-2 text-sm font-semibold text-[#1a73e8] hover:bg-[#f8fbff]"
                   >
                     <span className="text-base">+</span>
                     Add
@@ -1049,7 +1049,7 @@ function PatientAccountSettingsPage() {
                                 </p>
 
                                 {field.isPrimary && (
-                                  <span className="rounded-full bg-[#e0f2fe] px-2 py-0.5 text-[10px] font-semibold text-[#0284c7]">
+                                  <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[10px] font-semibold text-[#1a73e8]">
                                     Primary
                                   </span>
                                 )}
@@ -1068,7 +1068,7 @@ function PatientAccountSettingsPage() {
                               <button
                                 type="button"
                                 onClick={() => setEditingContactIndex(index)}
-                                className="text-xs font-semibold text-[#0284c7]"
+                                className="text-xs font-semibold text-[#1a73e8]"
                               >
                                 Edit
                               </button>
@@ -1096,7 +1096,7 @@ function PatientAccountSettingsPage() {
                                 {...register(
                                   `emergencyContacts.${index}.contactName`,
                                 )}
-                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                               />
                             </div>
 
@@ -1111,7 +1111,7 @@ function PatientAccountSettingsPage() {
                                   {...register(
                                     `emergencyContacts.${index}.contactPhone`,
                                   )}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
 
@@ -1124,7 +1124,7 @@ function PatientAccountSettingsPage() {
                                   {...register(
                                     `emergencyContacts.${index}.contactRelationship`,
                                   )}
-                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#0284c7] focus:ring-1 focus:ring-[#0284c7]"
+                                  className="h-11 w-full rounded-lg border border-[#e2e8f0] px-3.5 text-sm outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
                                 />
                               </div>
                             </div>
@@ -1164,7 +1164,7 @@ function PatientAccountSettingsPage() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingContactIndex(null)}
-                                  className="rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white"
+                                  className="rounded-lg bg-[#1a73e8] px-4 py-2 text-sm font-semibold text-white"
                                 >
                                   Done
                                 </button>
@@ -1192,7 +1192,7 @@ function PatientAccountSettingsPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-lg bg-[#0284c7] px-7 py-3 text-sm font-semibold text-white hover:bg-[#0369a1] disabled:opacity-50"
+                className="rounded-lg bg-[#1a73e8] px-7 py-3 text-sm font-semibold text-white hover:bg-[#155fc4] disabled:opacity-50"
               >
                 {isSubmitting ? "Saving..." : "Save & Update Changes"}
               </button>
@@ -1207,7 +1207,7 @@ function PatientAccountSettingsPage() {
 
               <div className="mt-5 flex justify-center">
                 <div className="relative">
-                  <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full bg-[#e0f2fe] text-[#0284c7]">
+                  <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full bg-[#eff6ff] text-[#1a73e8]">
                     <svg
                       viewBox="0 0 24 24"
                       className="h-16 w-16"
@@ -1221,7 +1221,7 @@ function PatientAccountSettingsPage() {
                   <button
                     type="button"
                     disabled
-                    className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#0284c7] text-lg text-white shadow-sm disabled:cursor-not-allowed"
+                    className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#1a73e8] text-lg text-white shadow-sm disabled:cursor-not-allowed"
                     title="Profile photo upload will be added later"
                   >
                     +
@@ -1275,7 +1275,7 @@ function PatientAccountSettingsPage() {
           </aside>
         </form>
       </div>
-    </main>
+    </div>
   );
 }
 

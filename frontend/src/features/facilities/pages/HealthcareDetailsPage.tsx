@@ -33,7 +33,7 @@ export default function HealthcareDetailsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="bg-slate-50">
         <div className="mx-auto max-w-5xl px-5 py-12 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-white p-8">
             <p className="font-['DM_Sans'] text-slate-600">
@@ -41,13 +41,13 @@ export default function HealthcareDetailsPage() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (error || !facility) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="bg-slate-50">
         <div className="mx-auto max-w-5xl px-5 py-12 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-white p-8">
             <p className="font-['DM_Sans'] text-red-600">
@@ -62,7 +62,7 @@ export default function HealthcareDetailsPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -80,7 +80,7 @@ export default function HealthcareDetailsPage() {
     encodeURIComponent(googleMapsQuery);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <div className="bg-slate-50">
       <section className="bg-white">
         <div className="mx-auto max-w-5xl px-5 py-10 lg:px-8">
           <Link
@@ -95,7 +95,7 @@ export default function HealthcareDetailsPage() {
               Healthcare Facility
             </span>
 
-            <h1 className="mt-4 font-['DM_Sans'] text-4xl font-bold leading-tight text-slate-900">
+            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-900">
               {facility.name}
             </h1>
 
@@ -145,7 +145,7 @@ export default function HealthcareDetailsPage() {
         <div className="mx-auto max-w-5xl px-5 py-8 lg:px-8">
           <div className="grid gap-6 md:grid-cols-2">
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="font-['DM_Sans'] text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900">
                 Contact Information
               </h2>
 
@@ -197,7 +197,7 @@ export default function HealthcareDetailsPage() {
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="font-['DM_Sans'] text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900">
                 Location
               </h2>
 
@@ -243,7 +243,7 @@ export default function HealthcareDetailsPage() {
 
           {facility.openingHours && (
             <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="font-['DM_Sans'] text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900">
                 Opening Hours
               </h2>
 
@@ -255,7 +255,7 @@ export default function HealthcareDetailsPage() {
 
           {facility.description && (
             <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="font-['DM_Sans'] text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900">
                 About this facility
               </h2>
 
@@ -268,7 +268,7 @@ export default function HealthcareDetailsPage() {
           {(facility.wheelchairAccessible !== undefined ||
             facility.toiletsAvailable !== undefined) && (
             <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="font-['DM_Sans'] text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900">
                 Facilities & Accessibility
               </h2>
 
@@ -302,6 +302,6 @@ export default function HealthcareDetailsPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

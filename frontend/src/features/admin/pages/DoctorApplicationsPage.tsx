@@ -72,8 +72,8 @@ function DoctorApplicationsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-7">
-        <p className="text-sm font-medium text-teal-700">Administration</p>
+      <header className="page-heading mb-7">
+        <p className="page-eyebrow">Administration</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">Doctor applications</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">Review pending licence applications before granting doctor access.</p>
       </header>

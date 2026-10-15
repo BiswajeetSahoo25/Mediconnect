@@ -338,7 +338,7 @@ function MedicinesPage() {
       </section>
 
       {/* Medicines */}
-      <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="font-['DM_Sans'] text-sm font-semibold uppercase tracking-[0.14em] text-[#1a73e8]">
@@ -471,7 +471,7 @@ function MedicinesPage() {
             )}
           </>
         )}
-      </main>
+      </div>
 
       {/* About FDA information */}
       <section className="border-t border-slate-200 bg-white">

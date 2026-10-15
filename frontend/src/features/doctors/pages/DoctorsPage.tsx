@@ -6,6 +6,11 @@ import {
   type SpecializationOption,
 } from "../index";
 import type { Doctor } from "../types";
+import {
+  MAX_DOCTOR_SEARCH_LENGTH,
+  readDoctorDirectorySearchParams,
+  updateDoctorSearchParam,
+} from "../doctorSearch";
 
 const PAGE_SIZE = 9;
 
@@ -116,12 +121,20 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 
 export default function DoctorsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { search: searchFromUrl, specialization: requestedSpecialization } =
+    readDoctorDirectorySearchParams(searchParams);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specializations, setSpecializations] = useState<SpecializationOption[]>([]);
   const [specializationsLoading, setSpecializationsLoading] = useState(true);
   const [specializationsError, setSpecializationsError] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchDraft, setSearchDraft] = useState<{
+    value: string;
+    basedOn: string;
+  } | null>(null);
+  const searchInput =
+    searchDraft?.basedOn === searchFromUrl
+      ? searchDraft.value
+      : searchFromUrl;
   const [specializationSearch, setSpecializationSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -147,32 +160,36 @@ export default function DoctorsPage() {
     };
   }, []);
 
-  const requestedSpecialization = searchParams.get("specialty") ?? searchParams.get("specializationId") ?? "";
   const specializationId = specializations.find(
     (item) => item.id === requestedSpecialization || item.name.localeCompare(requestedSpecialization, undefined, { sensitivity: "accent" }) === 0,
   )?.id ?? "";
 
   useEffect(() => {
+    const nextSearch = searchInput.trim().slice(0, MAX_DOCTOR_SEARCH_LENGTH);
+    if (nextSearch === searchFromUrl) return;
     const timer = window.setTimeout(() => {
-      const nextSearch = searchInput.trim();
-      if (nextSearch !== search) {
-        setSearch(nextSearch);
-        setCurrentPage(1);
-      }
+      setCurrentPage(1);
+      setSearchParams(
+        (current) => updateDoctorSearchParam(current, nextSearch),
+        { replace: true },
+      );
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [searchInput, search]);
+  }, [searchInput, searchFromUrl, setSearchParams]);
 
   useEffect(() => {
     let active = true;
     async function fetchDoctors() {
       setLoading(true);
       setError(null);
+      setDoctors([]);
+      setTotalResults(0);
+      setTotalPages(1);
       try {
         const response = await getDoctors({
           page: currentPage,
           limit: PAGE_SIZE,
-          ...(search ? { search } : {}),
+          ...(searchFromUrl ? { search: searchFromUrl } : {}),
           ...(specializationId ? { specializationId } : {}),
         });
         if (!active) return;
@@ -191,7 +208,7 @@ export default function DoctorsPage() {
     return () => {
       active = false;
     };
-  }, [currentPage, retryCount, search, specializationId]);
+  }, [currentPage, retryCount, searchFromUrl, specializationId]);
 
   const pageNumbers = useMemo(
     () => Array.from({ length: totalPages }, (_, index) => index + 1),
@@ -199,8 +216,7 @@ export default function DoctorsPage() {
   );
 
   function clearFilters() {
-    setSearchInput("");
-    setSearch("");
+    setSearchDraft(null);
     setSpecializationSearch("");
     setSearchParams({}, { replace: true });
     setCurrentPage(1);
@@ -223,7 +239,7 @@ export default function DoctorsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <div className="bg-slate-50">
       <section className="border-b border-slate-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">
@@ -235,7 +251,7 @@ export default function DoctorsPage() {
           <p className="mt-3 max-w-2xl text-slate-600">
             Browse verified healthcare professionals and explore their practice details.
           </p>
-          <label htmlFor="doctor-search" className="sr-only">Search doctors by name</label>
+          <label htmlFor="doctor-search" className="sr-only">Search doctors by name or licence number</label>
           <div className="relative mt-6 max-w-3xl">
             <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m16 16 4 4" /></svg>
@@ -243,9 +259,12 @@ export default function DoctorsPage() {
             <input
             id="doctor-search"
             type="search"
+            maxLength={MAX_DOCTOR_SEARCH_LENGTH}
             value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search doctors by name"
+            onChange={(event) =>
+              setSearchDraft({ value: event.target.value, basedOn: searchFromUrl })
+            }
+            placeholder="Search doctors by name or licence number"
             className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
           </div>
@@ -357,6 +376,6 @@ export default function DoctorsPage() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }
