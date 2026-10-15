@@ -8,17 +8,21 @@ import type {
   MedicalRecordIdInput,
 } from "./medical-record.validation.js";
 
-const medicalRecordService = new MedicalRecordService(
+const defaultMedicalRecordService = new MedicalRecordService(
   new PatientRepository(),
   new MedicalRecordRepository(),
 );
 
 export class MedicalRecordController {
+  constructor(
+    private readonly medicalRecordService = defaultMedicalRecordService,
+  ) {}
+
   async list(req: Request, res: Response) {
     const userId = req.user?.sub;
     if (!userId) throw new UnauthorizedError("Authentication required");
 
-    const records = await medicalRecordService.list(userId);
+    const records = await this.medicalRecordService.list(userId);
     res.status(200).json({ status: "success", data: records });
   }
 
@@ -27,7 +31,7 @@ export class MedicalRecordController {
     if (!userId) throw new UnauthorizedError("Authentication required");
 
     const input = req.validated.body as CreateMedicalRecordInput;
-    const record = await medicalRecordService.create(userId, input);
+    const record = await this.medicalRecordService.create(userId, input);
     res.status(201).json({ status: "success", data: record });
   }
 
@@ -36,7 +40,7 @@ export class MedicalRecordController {
     if (!userId) throw new UnauthorizedError("Authentication required");
 
     const { id } = req.validated.params as MedicalRecordIdInput;
-    const record = await medicalRecordService.getFile(userId, id);
+    const record = await this.medicalRecordService.getFile(userId, id);
     if (!record.fileData) throw new NotFoundError("Medical record not found");
     const fileName = record.fileName.replace(/[\r\n"\\]/g, "_");
     const fileData = Buffer.from(record.fileData);
@@ -58,7 +62,7 @@ export class MedicalRecordController {
     if (!userId) throw new UnauthorizedError("Authentication required");
 
     const { id } = req.validated.params as MedicalRecordIdInput;
-    await medicalRecordService.delete(userId, id);
+    await this.medicalRecordService.delete(userId, id);
     res.status(200).json({
       status: "success",
       message: "Medical record deleted successfully",

@@ -14,12 +14,27 @@ import { toUserResponse } from "../users/user.mapper.js";
 import type { CreateUserInput } from "../users/user.validation.js";
 
 export class AuthService {
-  private readonly userRepository: UserRepository;
-  private readonly refreshTokenRepository: RefreshTokenRepository;
+  private readonly userRepository: Pick<
+    UserRepository,
+    "create" | "findByEmail" | "findById" | "updateLastLogin"
+  >;
+  private readonly refreshTokenRepository: Pick<
+    RefreshTokenRepository,
+    "create" | "findByTokenHash" | "revoke" | "revokeIfActive"
+  >;
 
-  constructor() {
-    this.userRepository = new UserRepository();
-    this.refreshTokenRepository = new RefreshTokenRepository();
+  constructor(
+    userRepository: Pick<
+      UserRepository,
+      "create" | "findByEmail" | "findById" | "updateLastLogin"
+    > = new UserRepository(),
+    refreshTokenRepository: Pick<
+      RefreshTokenRepository,
+      "create" | "findByTokenHash" | "revoke" | "revokeIfActive"
+    > = new RefreshTokenRepository(),
+  ) {
+    this.userRepository = userRepository;
+    this.refreshTokenRepository = refreshTokenRepository;
   }
 
   async signup(data: CreateUserInput) {
@@ -99,7 +114,10 @@ export class AuthService {
       throw new UnauthorizedError();
     }
 
-    await this.refreshTokenRepository.revoke(storedToken.id);
+    const rotation = await this.refreshTokenRepository.revokeIfActive(
+      storedToken.id,
+    );
+    if (rotation.count !== 1) throw new UnauthorizedError();
 
     const newRefreshToken = generateRefreshToken();
 

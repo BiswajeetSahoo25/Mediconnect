@@ -4,7 +4,7 @@ import { AppError } from "../errors/app-error.js";
 
 export function errorMiddleware(
   error: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) {
@@ -18,11 +18,28 @@ export function errorMiddleware(
     return;
   }
 
-  console.error(error);
+  if (error instanceof Error) {
+    console.error("Unhandled request error", {
+      method: req.method,
+      path: req.path,
+      errorName: error.name,
+      message: error.message,
+      stack: error.stack,
+    });
+  } else {
+    const thrownType =
+      error === null ? "null" : Array.isArray(error) ? "array" : typeof error;
+
+    console.error("Unhandled non-Error value", {
+      method: req.method,
+      path: req.path,
+      errorName: "NonErrorThrownValue",
+      message: `Non-Error thrown value (type: ${thrownType})`,
+    });
+  }
 
   res.status(500).json({
     status: "error",
     message: "Internal server error",
-    error : error
   });
 }

@@ -186,6 +186,34 @@ if (integrationEnabled) {
     assert.equal(stored?.status, "CANCELLED");
   });
 
+  test("cancellation releases daily capacity without reusing an allocated queue number", async () => {
+    const date = utcDateAfter(51);
+    const first = await repository.createBooking(
+      bookingInput({ assignment: fixture.assignments[0], date, hour: 9, limit: 1 }),
+    );
+    await service.cancel(fixture.patientUser.id, first.id, { reason: "Release test capacity" });
+    const second = await repository.createBooking(
+      bookingInput({ assignment: fixture.assignments[0], date, hour: 10, limit: 1 }),
+    );
+
+    assert.equal(first.queueNumber, 1);
+    assert.equal(second.queueNumber, 2);
+    assert.equal(
+      await prisma.appointment.count({
+        where: {
+          doctorFacilityId: fixture.assignments[0].id,
+          appointmentDate: date,
+          status: "SCHEDULED",
+        },
+      }),
+      1,
+    );
+    assert.equal(
+      (await prisma.appointment.findUnique({ where: { id: first.id } }))?.status,
+      "CANCELLED",
+    );
+  });
+
   test("simultaneous requests for one slot create only one appointment", async () => {
     const date = utcDateAfter(46);
     const input = bookingInput({ assignment: fixture.assignments[0], date, hour: 10 });
@@ -232,6 +260,23 @@ if (integrationEnabled) {
         },
       }),
       1,
+    );
+  });
+
+  test("back-to-back appointments at different facilities are allowed at the exact duration boundary", async () => {
+    const date = utcDateAfter(50);
+    const results = await Promise.all(
+      fixture.assignments.map((assignment, index) =>
+        repository.createBooking({
+          ...bookingInput({ assignment, date, hour: 13 }),
+          appointmentStartAt: atUtcTime(date, 13, index * 30),
+        }),
+      ),
+    );
+    assert.equal(results.length, 2);
+    assert.deepEqual(
+      results.map(({ appointmentStartAt }) => appointmentStartAt.getTime()).sort(),
+      [atUtcTime(date, 13).getTime(), atUtcTime(date, 13, 30).getTime()],
     );
   });
 

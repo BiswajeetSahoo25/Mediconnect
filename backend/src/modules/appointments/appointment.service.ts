@@ -10,6 +10,7 @@ import {
   assertValidTimeZone,
   buildAppointmentSlots,
   getFacilityLocalDateTime,
+  getFacilityBookingDateWindow,
   getWeekdayForLocalDate,
   localDateToDatabaseDate,
 } from "./appointment-time.js";
@@ -63,7 +64,10 @@ function startOfDay(date: Date) {
 }
 
 export class AppointmentService {
-  constructor(private readonly appointmentRepository: AppointmentRepository) {}
+  constructor(
+    private readonly appointmentRepository: AppointmentRepository,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
 
   private async getPatientId(userId: string) {
     const patient = await this.appointmentRepository.findPatientByUserId(userId);
@@ -99,8 +103,11 @@ export class AppointmentService {
       };
     }
 
-    const now = new Date();
-    const today = getFacilityLocalDateTime(now, assignment.facility.timezone).date;
+    const now = this.now();
+    const { today } = getFacilityBookingDateWindow(
+      now,
+      assignment.facility.timezone,
+    );
     const dates: Array<{
       date: string;
       slots: Array<{ startAt: string; startTime: string; endTime: string }>;
@@ -185,7 +192,7 @@ export class AppointmentService {
       assignment.consultationMode,
     );
 
-    const now = new Date();
+    const now = this.now();
     const appointmentStartAt = input.appointmentStartAt;
     if (appointmentStartAt <= now) {
       throw new BadRequestError("The selected appointment time is in the past");
@@ -195,8 +202,11 @@ export class AppointmentService {
       appointmentStartAt,
       assignment.facility.timezone,
     );
-    const today = getFacilityLocalDateTime(now, assignment.facility.timezone).date;
-    if (localStart.date <= today || localStart.date > addLocalDays(today, 7)) {
+    const { today, lastDate } = getFacilityBookingDateWindow(
+      now,
+      assignment.facility.timezone,
+    );
+    if (localStart.date <= today || localStart.date > lastDate) {
       throw new BadRequestError(
         "Appointments can only be booked for the next 7 local days",
       );
