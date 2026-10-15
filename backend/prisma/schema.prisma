@@ -87,6 +87,7 @@ enum DocumentType {
   PRESCRIPTION
   DISCHARGE_SUMMARY
   REFERRAL
+  OTHER
 }
 
 enum ArticleStatus {
@@ -878,11 +879,12 @@ model LabTest {
 model MedicalDocument {
   id            String       @id @default(uuid()) @db.Uuid
   patientId     String       @map("patient_id") @db.Uuid
-  appointmentId String       @map("appointment_id") @db.Uuid
+  appointmentId String?      @map("appointment_id") @db.Uuid
   uploadedBy    String       @map("uploaded_by") @db.Uuid
   documentType  DocumentType @map("document_type")
   fileName      String       @map("file_name") @db.VarChar(255)
   fileUrl       String       @map("file_url") @db.VarChar(1000)
+  fileData      Bytes?       @map("file_data")
   fileSize      Int?         @map("file_size")
   mimeType      String?      @map("mime_type") @db.VarChar(100)
   isVerified    Boolean      @default(false) @map("is_verified")
@@ -893,7 +895,7 @@ model MedicalDocument {
 
   patient Patient @relation(fields: [patientId], references: [id])
 
-  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
 
   uploadedByUser User @relation("MedicalDocumentUploadedBy", fields: [uploadedBy], references: [id])
 

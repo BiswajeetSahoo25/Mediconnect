@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +10,10 @@ import {
 } from "../../../validators/login.validator";
 import { ApiError, loginUser } from "../../../services/api";
 import { useAuth } from "../../../hooks/useAuth";
+import AuthShell from "../components/AuthShell";
 
 function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
 
@@ -61,37 +64,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
-        <div className="w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          {/* Header */}
-          <div className="mb-8">
-            <Link
-              to="/"
-              aria-label="Go to home"
-              className="mb-6 inline-flex items-center rounded-lg p-2 transition hover:bg-slate-100"
-            >
-              <img
-                width="20"
-                height="20"
-                src="https://img.icons8.com/parakeet-filled/48/home.png"
-                alt=""
-              />
-            </Link>
-
-            <p className="mb-2 text-sm font-medium text-slate-500">
-              Welcome back
-            </p>
-
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-              Login to MediConnect
-            </h1>
-
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Sign in to access your MediConnect account.
-            </p>
-          </div>
-
+    <AuthShell eyebrow="Welcome back" title="Good to see you again." description="Sign in to pick up where you left off with your care.">
           {/* Form */}
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -102,7 +75,7 @@ function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700"
               >
                 Email address
               </label>
@@ -113,7 +86,7 @@ function LoginPage() {
                 autoComplete="email"
                 placeholder="you@example.com"
                 {...register("email")}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                className={`w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10 ${errors.email ? "border-rose-300" : "border-slate-200"}`}
               />
 
               {errors.email && (
@@ -125,30 +98,37 @@ function LoginPage() {
 
             {/* Password */}
             <div>
-              <div className="mb-1.5 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-slate-700"
+                  className="block text-sm font-semibold text-slate-700"
                 >
                   Password
                 </label>
 
-                <button
-                  type="button"
-                  className="text-xs font-medium text-slate-500 transition hover:text-slate-900"
-                >
-                  Forgot password?
-                </button>
+                <span className="text-xs text-slate-400">
+                  Keep your account secure
+                </span>
               </div>
 
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                {...register("password")}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  {...register("password")}
+                  className={`w-full rounded-xl border bg-white px-4 py-3.5 pr-16 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10 ${errors.password ? "border-rose-300" : "border-slate-200"}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="absolute inset-y-0 right-4 text-xs font-semibold text-slate-500 hover:text-emerald-700"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
 
               {errors.password && (
                 <p className="mt-1.5 text-sm text-red-600">
@@ -159,8 +139,8 @@ function LoginPage() {
 
             {/* Server error */}
             {errors.root && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                <p className="text-sm text-red-700">
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <p className="text-sm text-rose-700">
                   {errors.root.message}
                 </p>
               </div>
@@ -170,25 +150,23 @@ function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/15 transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-700/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? "Signing in…" : <>Sign in <span aria-hidden="true">→</span></>}
             </button>
           </form>
 
           {/* Signup */}
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{" "}
+          <p className="mt-7 text-center text-sm text-slate-500">
+            New to MediConnect?{" "}
             <Link
               to="/signup"
-              className="font-semibold text-slate-900 hover:underline"
+              className="font-bold text-emerald-700 hover:text-emerald-800"
             >
               Create one
             </Link>
           </p>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 

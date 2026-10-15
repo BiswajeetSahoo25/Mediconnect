@@ -171,11 +171,51 @@ function Sidebar() {
   ];
 
   return (
-    <aside
-      className={`hidden min-h-[calc(100vh-4.5rem)] shrink-0 border-r border-slate-200 bg-white transition-[width] duration-200 md:block ${
-        collapsed ? "w-20" : "w-64"
-      }`}
-    >
+    <>
+      <nav
+        aria-label="Patient navigation"
+        className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2 md:hidden"
+      >
+        {[...navigation, ...providerNavigation.filter(
+          (item) =>
+            item.path !== "/apply-as-doctor" ||
+            (isPatient && doctorApplicationStatus === null),
+        )].map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={isActive ? "page" : undefined}
+              className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                isActive
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+        {isPatient && (
+          <Link
+            to="/account"
+            aria-current={location.pathname === "/account" ? "page" : undefined}
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              location.pathname === "/account"
+                ? "bg-blue-50 text-blue-700"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+          >
+            Account settings
+          </Link>
+        )}
+      </nav>
+      <aside
+        className={`hidden min-h-[calc(100vh-4.5rem)] shrink-0 border-r border-slate-200 bg-white transition-[width] duration-200 md:block ${
+          collapsed ? "w-20" : "w-64"
+        }`}
+      >
       <nav className="flex h-full flex-col px-3 py-5">
         <div
           className={`mb-5 flex ${
@@ -274,7 +314,8 @@ function Sidebar() {
           </div>
         )}
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }
 

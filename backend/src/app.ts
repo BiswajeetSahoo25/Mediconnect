@@ -15,6 +15,7 @@ import appointmentRouter from "./modules/appointments/appointment.routes.js";
 import articleRouter from "./modules/articles/article.routes.js";
 import facilityRouter from "./modules/facilities/facility.routes.js";
 import medicineRouter from "./modules/medicines/medicine.routes.js";
+import medicalRecordRouter from "./modules/patients/medical-record.routes.js";
 
 const app = express();
 
@@ -25,9 +26,15 @@ app.use(
   }),
 );
 
-app.use(express.json());
-
 app.use(cookieParser());
+
+app.use(
+  "/api/v1/patients/me/medical-records",
+  express.json({ limit: "8mb" }),
+  medicalRecordRouter,
+);
+
+app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.send("Mediconnect");

@@ -2,17 +2,37 @@
 @import "tailwindcss";
 
 :root {
-  font-family: "DM Sans", sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  color: #13243a;
+  background: #f6f9fc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  color-scheme: light;
+  --color-brand: #1769d2;
+  --color-brand-dark: #1055b2;
+  --color-ink: #13243a;
+  --color-muted: #64748b;
+  --color-line: #e3eaf2;
+  --color-canvas: #f6f9fc;
+  --focus-ring: 0 0 0 4px rgb(23 105 210 / 15%);
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+  scroll-padding-top: 1.5rem;
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background: #f8fafc;
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  line-height: 1.5;
 }
 
 button,
@@ -20,4 +40,55 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  color: #0c3a76;
+  background: #cfe3ff;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(23 105 210 / 55%);
+  outline-offset: 3px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  accent-color: var(--color-brand);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+img {
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

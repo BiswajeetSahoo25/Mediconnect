@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useUserLocation } from "../hooks/useUserLocation";
 import { mapPinIcon } from "../assets/icons";
@@ -7,7 +7,14 @@ import { mediLogo } from "../assets/icons";
 const plusIcon = mediLogo;
 
 function Navbar() {
-  const { isAuthenticated, user, doctorApplicationStatus, isDoctor, isPatient } = useAuth();
+  const { pathname } = useLocation();
+  const {
+    isAuthenticated,
+    user,
+    doctorApplicationStatus,
+    isDoctor,
+    isPatient,
+  } = useAuth();
   const { location, loading } = useUserLocation();
 
   const locationText = loading
@@ -15,9 +22,15 @@ function Navbar() {
     : location?.city
       ? `${location.city}${location.state ? `, ${location.state}` : ""}`
       : "Location unavailable";
+  const isCurrent = (to: string) =>
+    to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+  const desktopNavClass = (to: string) =>
+    `font-['DM_Sans'] text-[14px] leading-none transition-colors ${isCurrent(to) ? "font-bold text-[#1a73e8]" : "font-medium text-[#334155] hover:text-[#1a73e8]"}`;
+  const mobileNavClass = (to: string) =>
+    `whitespace-nowrap font-['DM_Sans'] text-sm transition-colors ${isCurrent(to) ? "font-bold text-[#1a73e8]" : "font-medium text-[#334155] hover:text-[#1a73e8]"}`;
 
   return (
-    <header className="border-b border-[#e2e8f0] bg-white">
+    <header className="sticky top-0 z-40 border-b border-[#e2e8f0] bg-white/95 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-md">
       <nav className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 lg:px-20">
         {/* Left: Logo + Location */}
         <div className="flex items-center gap-10">
@@ -48,42 +61,48 @@ function Navbar() {
         <div className="hidden items-center gap-8 lg:flex">
           <Link
             to="/"
-            className="font-['DM_Sans'] text-[14px] font-bold leading-none text-[#1a73e8]"
+            aria-current={isCurrent("/") ? "page" : undefined}
+            className={desktopNavClass("/")}
           >
             Home
           </Link>
 
           <Link
             to={isAuthenticated ? "/doctors" : "/signup"}
-            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+            aria-current={isCurrent("/doctors") ? "page" : undefined}
+            className={desktopNavClass("/doctors")}
           >
             Find Doctors
           </Link>
 
           <Link
             to="/healthcare"
-            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+            aria-current={isCurrent("/healthcare") ? "page" : undefined}
+            className={desktopNavClass("/healthcare")}
           >
             Find Healthcare
           </Link>
 
           <Link
             to={isAuthenticated ? "/appointments" : "/signup"}
-            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+            aria-current={isCurrent("/appointments") ? "page" : undefined}
+            className={desktopNavClass("/appointments")}
           >
             Appointments
           </Link>
 
           <Link
-            to={isAuthenticated ? "/records" : "/signup"}
-            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+            to="/medicines"
+            aria-current={isCurrent("/medicines") ? "page" : undefined}
+            className={desktopNavClass("/medicines")}
           >
-            Health Records
+            Medicines
           </Link>
 
           <Link
             to="/help"
-            className="font-['DM_Sans'] text-[14px] font-medium leading-none text-[#334155] transition-colors hover:text-[#1a73e8]"
+            aria-current={isCurrent("/help") ? "page" : undefined}
+            className={desktopNavClass("/help")}
           >
             Help
           </Link>
@@ -93,12 +112,14 @@ function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              {isPatient && doctorApplicationStatus === null && !isDoctor && <Link
-                to="/apply-as-doctor"
-                className="hidden rounded-lg border border-[#e2e8f0] bg-white px-6 py-3 font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-all hover:border-[#1a73e8] hover:bg-[#f8fbff] sm:flex"
-              >
-                Apply as doctor
-              </Link>}
+              {isPatient && doctorApplicationStatus === null && !isDoctor && (
+                <Link
+                  to="/apply-as-doctor"
+                  className="hidden rounded-lg border border-[#e2e8f0] bg-white px-6 py-3 font-['DM_Sans'] text-[14px] font-semibold leading-none text-[#0f172a] transition-all hover:border-[#1a73e8] hover:bg-[#f8fbff] sm:flex"
+                >
+                  Apply as doctor
+                </Link>
+              )}
 
               <Link
                 to="/account"
@@ -135,42 +156,48 @@ function Navbar() {
         <div className="flex items-center gap-6 overflow-x-auto px-5 py-3">
           <Link
             to="/"
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-bold text-[#1a73e8]"
+            aria-current={isCurrent("/") ? "page" : undefined}
+            className={mobileNavClass("/")}
           >
             Home
           </Link>
 
           <Link
             to={isAuthenticated ? "/doctors" : "/signup"}
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+            aria-current={isCurrent("/doctors") ? "page" : undefined}
+            className={mobileNavClass("/doctors")}
           >
             Find Doctors
           </Link>
 
           <Link
             to="/healthcare"
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+            aria-current={isCurrent("/healthcare") ? "page" : undefined}
+            className={mobileNavClass("/healthcare")}
           >
             Find Healthcare
           </Link>
 
           <Link
             to={isAuthenticated ? "/appointments" : "/signup"}
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+            aria-current={isCurrent("/appointments") ? "page" : undefined}
+            className={mobileNavClass("/appointments")}
           >
             Appointments
           </Link>
 
           <Link
-            to={isAuthenticated ? "/records" : "/signup"}
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+            to="/medicines"
+            aria-current={isCurrent("/medicines") ? "page" : undefined}
+            className={mobileNavClass("/medicines")}
           >
-            Health Records
+            Get Medicines
           </Link>
 
           <Link
             to="/help"
-            className="whitespace-nowrap font-['DM_Sans'] text-sm font-medium text-[#334155]"
+            aria-current={isCurrent("/help") ? "page" : undefined}
+            className={mobileNavClass("/help")}
           >
             Help
           </Link>

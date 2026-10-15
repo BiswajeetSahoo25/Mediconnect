@@ -21,12 +21,12 @@ function DoctorWorkspaceLayout() {
             <span className="font-['Outfit'] text-xl font-extrabold tracking-tight text-blue-700">
               MediConnect
             </span>
-            <Link
-              to="/doctor-dashboard"
-              className="ml-2 hidden border-l border-slate-200 pl-3 text-sm font-medium text-slate-500 transition hover:text-blue-700 sm:inline"
-            >
-              Doctor workspace
-            </Link>
+          </Link>
+          <Link
+            to="/doctor-dashboard"
+            className="ml-auto mr-3 border-l border-slate-200 pl-3 text-sm font-medium text-slate-500 transition hover:text-blue-700 sm:ml-2 sm:mr-auto sm:inline"
+          >
+            Doctor workspace
           </Link>
           <div className="flex items-center gap-4">
             <Link

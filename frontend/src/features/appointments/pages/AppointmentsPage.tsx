@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ApiError } from "../../../services/api";
-import { getSpecializations, type SpecializationOption } from "../../doctors";
 import { formatAppointmentStartAt } from "../format-appointment-time";
 import { cancelAppointment, getAppointments } from "../index";
 import {
@@ -186,10 +185,6 @@ function AppointmentCard({
 }
 
 export default function AppointmentsPage() {
-  const navigate = useNavigate();
-  const [specializations, setSpecializations] = useState<SpecializationOption[]>([]);
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-  const [specializationsLoading, setSpecializationsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [view, setView] = useState<AppointmentView>("ALL");
   const [page, setPage] = useState(1);
@@ -244,28 +239,6 @@ export default function AppointmentsPage() {
     void Promise.resolve().then(fetchAppointments);
   }, [fetchAppointments]);
 
-  useEffect(() => {
-    let active = true;
-    getSpecializations()
-      .then((response) => {
-        if (active) setSpecializations(response.data);
-      })
-      .catch(() => {
-        if (active) setSpecializations([]);
-      })
-      .finally(() => {
-        if (active) setSpecializationsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  function findSpecialist() {
-    const selected = specializations.find((item) => item.id === selectedSpecialization);
-    navigate(selected ? `/doctors?specialty=${encodeURIComponent(selected.name)}` : "/doctors");
-  }
-
   async function handleCancel() {
     if (!cancellationTarget || !cancellationReason.trim()) return;
     try {
@@ -297,14 +270,6 @@ export default function AppointmentsPage() {
           <p className="mt-1 text-sm text-slate-500">
             Review scheduled visits, appointment history, and cancellations.
           </p>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <label htmlFor="appointment-specialty-search" className="sr-only">Choose a specialty to find a doctor</label>
-          <select id="appointment-specialty-search" value={selectedSpecialization} onChange={(event) => setSelectedSpecialization(event.target.value)} disabled={specializationsLoading || specializations.length === 0} className="min-w-52 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-100">
-            <option value="">Any specialty</option>
-            {specializations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-          <button type="button" onClick={findSpecialist} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Find a doctor</button>
         </div>
       </div>
 

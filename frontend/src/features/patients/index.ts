@@ -3,6 +3,20 @@ export {
   updatePatient,
 } from "./services/patient.service";
 
+export {
+  getMedicalDocuments,
+  createMedicalDocument,
+  downloadMedicalDocument,
+  deleteMedicalDocument,
+  MEDICAL_DOCUMENT_TYPES,
+} from "./services/medical-record.service";
+
+export type {
+  MedicalDocument,
+  MedicalDocumentType,
+  CreateMedicalDocumentInput,
+} from "./services/medical-record.service";
+
 export type {
   Patient,
   PatientResponse,

@@ -15,11 +15,11 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./features/auth/pages/LoginPage";
 import SignupPage from "./features/auth/pages/SignupPage";
 import DashboardPage from "./features/patients/pages/DashboardPage";
+import MedicalRecordsPage from "./features/patients/pages/MedicalRecordsPage";
 import OnboardingPage from "./features/patients/pages/OnboardingPage";
 import DoctorDashboardPage from "./features/doctors/pages/DoctorDashboardPage";
 import DoctorProfessionalProfilePage from "./features/doctors/pages/DoctorProfessionalProfilePage";
 import DoctorApplicationPage from "./features/doctors/pages/DoctorApplicationPage";
-import FeaturePage from "./pages/FeaturePage";
 import HealthArticlesPage from "./features/articles/pages/HealthArticlesPage";
 import ArticlePage from "./features/articles/pages/ArticlePage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -133,13 +133,7 @@ function App() {
                   />
                   <Route
                     path="/records"
-                    element={
-                      <FeaturePage
-                        eyebrow="Health information"
-                        title="Medical records"
-                        description="Your verified records, test results and visit documents will appear here."
-                      />
-                    }
+                    element={<MedicalRecordsPage />}
                   />
                 </Route>
                 <Route element={<ProtectedRoleRoute role="DOCTOR" />}>
